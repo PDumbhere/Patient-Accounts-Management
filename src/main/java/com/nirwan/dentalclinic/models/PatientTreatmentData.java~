@@ -1,0 +1,11 @@
+package com.nirwan.dentalclinic.models;
+
+import java.util.List;
+
+
+public class PatientTreatmentData {
+    Patient patient;
+    Treatment treatment;
+    List<Appointment> appointments;
+    String status;
+}

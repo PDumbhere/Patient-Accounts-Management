@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nirwan.dentalclinic.controllers.MainController">
+    <top>
+        <HBox spacing="10" style="-fx-padding: 10;">
+            <Label text="Nirwan Dental Clinic - Account Management" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+        </HBox>
+    </top>
+    <center>
+        <TableView fx:id="patientTable">
+            <columns>
+                <TableColumn text="Patient Name" fx:id="colPatientName"/>
+                <TableColumn text="Age" fx:id="colPatientAge"/>
+                <TableColumn text="Recent Treatment" fx:id="colRecentTreatment"/>
+                <TableColumn text="Treatment Date" fx:id="colTreatmentDate"/>
+                <TableColumn text="Balance Payment" fx:id="colBalancePayment"/>
+            </columns>
+        </TableView>
+    </center>
+    <bottom>
+        <HBox spacing="10" style="-fx-padding: 10;">
+            <Button text="Add Patient" fx:id="btnAddPatient"/>
+            <Button text="Update Patient" fx:id="btnUpdatePatient"/>
+            <Button text="Export to Excel" fx:id="btnExportData"/>
+        </HBox>
+    </bottom>
+</BorderPane>

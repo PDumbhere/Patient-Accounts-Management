@@ -1,0 +1,150 @@
+package com.nirwan.dentalclinic.repository;
+
+import com.nirwan.dentalclinic.models.Appointment;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class AppointmentDao {
+    private static final String URL = "jdbc:h2:./database/dentalclinic";
+    private static final String USER = "sa";
+    private static final String PASSWORD = "";
+
+    // CREATE a new appointment
+    public static void addAppointment(Appointment appointment) {
+        String query = "INSERT INTO Appointment (patientTreatmentMappingId, appointmentDate, paymentMade, remarks) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, appointment.getPatientTreatmentMappingId());
+            pstmt.setString(2, appointment.getAppointmentDate());
+            pstmt.setDouble(3, appointment.getPaymentMade());
+            pstmt.setString(4, appointment.getRemarks());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error adding appointment: " + e.getMessage());
+        }
+    }
+
+    // READ all appointments
+    public static List<Appointment> getAllAppointments() {
+        List<Appointment> appointments = new ArrayList<>();
+        String query = "SELECT * FROM Appointment";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                appointments.add(new Appointment(
+                        rs.getInt("id"),
+                        rs.getInt("patientTreatmentMappingId"),
+                        rs.getString("appointmentDate"),
+                        rs.getDouble("paymentMade"),
+                        rs.getString("remarks")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching appointments: " + e.getMessage());
+        }
+        return appointments;
+    }
+
+    // READ appointments for a specific patient
+    public static List<Appointment> getAppointmentsByPatient(int patientId) {
+        List<Appointment> appointments = new ArrayList<>();
+        String query = "SELECT * FROM Appointment WHERE patientTreatmentMappingId IN " +
+                "(SELECT id FROM Patient_Treatment WHERE patient_id = ?)";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, patientId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                appointments.add(new Appointment(
+                        rs.getInt("id"),
+                        rs.getInt("patientTreatmentMappingId"),
+                        rs.getString("appointmentDate"),
+                        rs.getDouble("paymentMade"),
+                        rs.getString("remarks")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching appointments for patient: " + e.getMessage());
+        }
+        return appointments;
+    }
+
+    // READ appointments for a specific treatment
+    public static List<Appointment> getAppointmentsByTreatment(int treatmentId) {
+        List<Appointment> appointments = new ArrayList<>();
+        String query = "SELECT * FROM Appointment WHERE patientTreatmentMappingId IN " +
+                "(SELECT id FROM Patient_Treatment WHERE treatment_id = ?)";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, treatmentId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                appointments.add(new Appointment(
+                        rs.getInt("id"),
+                        rs.getInt("patientTreatmentMappingId"),
+                        rs.getString("appointmentDate"),
+                        rs.getDouble("paymentMade"),
+                        rs.getString("remarks")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching appointments for treatment: " + e.getMessage());
+        }
+        return appointments;
+    }
+
+    // READ appointments for a specific patient and treatment combination
+    public static List<Appointment> getAppointmentsByPatientAndTreatment(int patientId, int treatmentId) {
+        List<Appointment> appointments = new ArrayList<>();
+        String query = "SELECT * FROM Appointment WHERE patientTreatmentMappingId IN " +
+                "(SELECT id FROM Patient_Treatment WHERE patient_id = ? AND treatment_id = ?)";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, patientId);
+            pstmt.setInt(2, treatmentId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                appointments.add(new Appointment(
+                        rs.getInt("id"),
+                        rs.getInt("patientTreatmentMappingId"),
+                        rs.getString("appointmentDate"),
+                        rs.getDouble("paymentMade"),
+                        rs.getString("remarks")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching appointments for patient and treatment: " + e.getMessage());
+        }
+        return appointments;
+    }
+
+    // UPDATE an appointment
+    public static void updateAppointment(Appointment appointment) {
+        String query = "UPDATE Appointment SET patientTreatmentMappingId = ?, appointmentDate = ?, paymentMade = ?, remarks = ? WHERE id = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, appointment.getPatientTreatmentMappingId());
+            pstmt.setString(2, appointment.getAppointmentDate());
+            pstmt.setDouble(3, appointment.getPaymentMade());
+            pstmt.setString(4, appointment.getRemarks());
+            pstmt.setInt(5, appointment.getId());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error updating appointment: " + e.getMessage());
+        }
+    }
+
+    // DELETE an appointment
+    public static void deleteAppointment(int id) {
+        String query = "DELETE FROM Appointment WHERE id = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error deleting appointment: " + e.getMessage());
+        }
+    }
+}
