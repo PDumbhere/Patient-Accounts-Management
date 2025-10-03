@@ -1,1 +1,77 @@
-<!-- Patient management UI -->
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.nirwan.dentalclinic.controllers.PatientViewController"
+            stylesheets="@../css/patient-view.css">
+
+    <top>
+        <ToolBar>
+            <Button text="Back to List" onAction="#handleBackToList" />
+            <Button text="Refresh" onAction="#handleRefresh" />
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="patientNameLabel" styleClass="header-text" />
+        </ToolBar>
+    </top>
+
+    <center>
+        <VBox spacing="10" style="-fx-padding: 15;">
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Patient ID:" style="-fx-font-weight: bold;"/>
+                <Label fx:id="patientIdLabel"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="Status:" style="-fx-font-weight: bold;"/>
+                <Label fx:id="patientStatusLabel" style="-fx-text-fill: #2e7d32; -fx-font-weight: bold;"/>
+            </HBox>
+            
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Treatments" style="-fx-font-size: 1.2em; -fx-font-weight: bold;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="New Treatment" onAction="#showNewTreatmentDialog" style="-fx-background-color: #4caf50; -fx-text-fill: white;"/>
+                </HBox>
+                
+                <TableView fx:id="treatmentsTable" style="-fx-table-cell-border-color: transparent;">
+                    <columns>
+                        <TableColumn fx:id="treatmentIdCol" text="ID" prefWidth="60">
+                            <cellValueFactory><PropertyValueFactory property="treatmentId"/></cellValueFactory>
+                        </TableColumn>
+                        <TableColumn fx:id="descriptionCol" text="Description" prefWidth="200">
+                            <cellValueFactory><PropertyValueFactory property="description"/></cellValueFactory>
+                        </TableColumn>
+                        <TableColumn fx:id="dateCol" text="Date" prefWidth="100">
+                            <cellValueFactory><PropertyValueFactory property="createdAt"/></cellValueFactory>
+                        </TableColumn>
+                        <TableColumn fx:id="totalAmountCol" text="Total" prefWidth="100">
+                            <cellValueFactory><PropertyValueFactory property="totalAmount"/></cellValueFactory>
+                        </TableColumn>
+                        <TableColumn fx:id="paidAmountCol" text="Paid" prefWidth="100">
+                            <cellValueFactory><PropertyValueFactory property="amountPaid"/></cellValueFactory>
+                        </TableColumn>
+                        <TableColumn fx:id="pendingAmountCol" text="Pending" prefWidth="100">
+                            <cellValueFactory><PropertyValueFactory property="amountPending"/></cellValueFactory>
+                        </TableColumn>
+                        <TableColumn fx:id="statusCol" text="Status" prefWidth="100">
+                            <cellValueFactory><PropertyValueFactory property="active"/></cellValueFactory>
+                        </TableColumn>
+                    </columns>
+                </TableView>
+                
+                <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 5 0 0 0;">
+                    <Label text="Total Balance:" style="-fx-font-weight: bold;"/>
+                    <Label fx:id="totalBalanceLabel" style="-fx-font-size: 1.1em; -fx-text-fill: #d32f2f; -fx-font-weight: bold;"/>
+                </HBox>
+            </VBox>
+    </center>
+    
+    <bottom>
+        <ToolBar>
+            <Label text="Last Updated:" style="-fx-font-style: italic;"/>
+            <Label fx:id="lastUpdatedLabel" style="-fx-font-style: italic;"/>
+        </ToolBar>
+    </bottom>
+</BorderPane>

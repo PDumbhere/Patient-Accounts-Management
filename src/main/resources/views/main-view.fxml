@@ -1,30 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.geometry.Insets?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.nirwan.dentalclinic.controllers.MainController">
+<?import java.lang.String?>
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nirwan.dentalclinic.controllers.MainController"
+            style="-fx-padding: 10;">
+    
     <top>
-        <HBox spacing="10" style="-fx-padding: 10;">
-            <Label text="Nirwan Dental Clinic - Account Management" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
-        </HBox>
+        <VBox spacing="10" styleClass="header">
+            <Label text="Nirwan Dental Clinic - Account Management" styleClass="header-title" />
+            <Separator styleClass="header-separator" />
+        </VBox>
     </top>
+    
     <center>
-        <TableView fx:id="patientTable">
+        <TableView fx:id="patientTable" styleClass="data-table">
             <columns>
-                <TableColumn text="Patient Name" fx:id="colPatientName"/>
-                <TableColumn text="Age" fx:id="colPatientAge"/>
-                <TableColumn text="Recent Treatment" fx:id="colRecentTreatment"/>
-                <TableColumn text="Treatment Date" fx:id="colTreatmentDate"/>
-                <TableColumn text="Balance Payment" fx:id="colBalancePayment"/>
+                <!-- Patient ID -->
+                <TableColumn text="ID" fx:id="colPatientId"/>
+                <!-- Patient Name -->
+                <TableColumn text="Patient Name" fx:id="colPatientName" prefWidth="150" />
+                
+                <!-- Treatment Date -->
+                <TableColumn text="Date" fx:id="colTreatmentDate" prefWidth="100" />
+                
+                <!-- Description -->
+                <TableColumn text="Treatment" fx:id="colDescription" prefWidth="250" />
+                
+                <!-- Amounts -->
+                <TableColumn text="Total (₹)" fx:id="colTotalAmount" prefWidth="100" />
+                <TableColumn text="Paid (₹)" fx:id="colAmountPaid" prefWidth="100" />
+                <TableColumn text="Pending (₹)" fx:id="colAmountPending" prefWidth="100" />
+                
+                <!-- Status -->
+                <TableColumn text="Status" fx:id="colStatus" prefWidth="100" />
             </columns>
         </TableView>
     </center>
+    
     <bottom>
-        <HBox spacing="10" style="-fx-padding: 10;">
-            <Button text="Add Patient" fx:id="btnAddPatient"/>
-            <Button text="Update Patient" fx:id="btnUpdatePatient"/>
-            <Button text="Export to Excel" fx:id="btnExportData"/>
+        <HBox spacing="10" alignment="CENTER" style="-fx-padding: 10 0 0 0;">
+            <Button text="Add Patient" fx:id="btnAddPatient" styleClass="action-button" />
+            <Button text="Add Treatment" fx:id="btnAddTreatment" styleClass="action-button" />
+            <Button text="Record Payment" fx:id="btnRecordPayment" styleClass="action-button" />
+            <Button text="Export to Excel" fx:id="btnExportData" styleClass="action-button" />
         </HBox>
     </bottom>
+    
 </BorderPane>
