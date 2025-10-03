@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<GridPane xmlns:fx="http://javafx.com/fxml" 
+          stylesheets="@../../css/patient-view.css"
+          fx:controller="com.nirwan.dentalclinic.controllers.dialogs.NewTreatmentGridController"
+          hgap="10" vgap="10" 
+          style="-fx-padding: 20; -fx-min-width: 500;">
+    
+    <Label text="New Treatment" 
+           style="-fx-font-size: 16px; -fx-font-weight: bold;" 
+           GridPane.columnIndex="0" GridPane.rowIndex="0" 
+           GridPane.columnSpan="2" GridPane.halignment="CENTER"/>
+    
+    <!-- Description -->
+    <Label text="Description:" 
+           GridPane.columnIndex="0" GridPane.rowIndex="1" 
+           GridPane.halignment="RIGHT"/>
+    <TextArea fx:id="descriptionField" 
+              wrapText="true" 
+              prefRowCount="3"
+              GridPane.columnIndex="1" GridPane.rowIndex="1" 
+              GridPane.hgrow="ALWAYS"/>
+    
+    <!-- Cost -->
+    <Label text="Initial Cost:" 
+           GridPane.columnIndex="0" GridPane.rowIndex="2" 
+           GridPane.halignment="RIGHT"/>
+    <HBox spacing="5" 
+          GridPane.columnIndex="1" GridPane.rowIndex="2">
+        <Label text="₹" style="-fx-font-weight: bold; -fx-padding: 5 0 0 0;"/>
+        <TextField fx:id="costField" style="-fx-pref-width: 120;"/>
+    </HBox>
+    
+    <!-- Initial Payment -->
+    <Label text="Initial Payment:" 
+           GridPane.columnIndex="0" GridPane.rowIndex="3" 
+           GridPane.halignment="RIGHT"/>
+    <HBox spacing="5" 
+          GridPane.columnIndex="1" GridPane.rowIndex="3">
+        <Label text="₹" style="-fx-font-weight: bold; -fx-padding: 5 0 0 0;"/>
+        <TextField fx:id="initialPaymentField" style="-fx-pref-width: 120;"/>
+    </HBox>
+    
+    <!-- Payment Method -->
+    <Label text="Payment Method:" 
+           GridPane.columnIndex="0" GridPane.rowIndex="4" 
+           GridPane.halignment="RIGHT"/>
+    <ComboBox fx:id="paymentMethodCombo" 
+              GridPane.columnIndex="1" GridPane.rowIndex="4" 
+              GridPane.hgrow="ALWAYS"/>
+    
+    <!-- Notes -->
+    <Label text="Notes:" 
+           GridPane.columnIndex="0" GridPane.rowIndex="5" 
+           GridPane.halignment="RIGHT" GridPane.valignment="TOP"/>
+    <TextArea fx:id="notesField" 
+              wrapText="true" 
+              prefRowCount="3"
+              GridPane.columnIndex="1" GridPane.rowIndex="5" 
+              GridPane.hgrow="ALWAYS"/>
+    
+    <!-- Error Label -->
+    <Label fx:id="errorLabel" 
+           style="-fx-text-fill: #d32f2f; -fx-padding: 10 0 0 0;" 
+           GridPane.columnIndex="0" GridPane.rowIndex="6" 
+           GridPane.columnSpan="2"/>
+    
+    <!-- Buttons -->
+    <HBox spacing="10" 
+          style="-fx-padding: 10 0 0 0;" 
+          alignment="CENTER_RIGHT" 
+          GridPane.columnIndex="0" GridPane.rowIndex="7" 
+          GridPane.columnSpan="2">
+        <Button text="Cancel" onAction="#handleCancel" 
+                styleClass="btn-cancel"/>
+        <Button text="Save" onAction="#handleOk" 
+                styleClass="btn-ok" defaultButton="true"/>
+    </HBox>
+    
+</GridPane>

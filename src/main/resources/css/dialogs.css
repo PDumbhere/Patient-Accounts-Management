@@ -1,0 +1,42 @@
+/* Dialog buttons */
+.btn-ok {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 16px;
+    -fx-background-radius: 4px;
+}
+
+.btn-ok:hover {
+    -fx-background-color: #45a049;
+    -fx-cursor: hand;
+}
+
+.btn-ok:disabled {
+    -fx-opacity: 0.6;
+    -fx-cursor: default;
+}
+
+.btn-cancel {
+    -fx-background-color: #f44336;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 16px;
+    -fx-background-radius: 4px;
+}
+
+.btn-cancel:hover {
+    -fx-background-color: #d32f2f;
+    -fx-cursor: hand;
+}
+
+/* Button bar styling */
+.dialog-pane .button-bar {
+    -fx-padding: 10px;
+    -fx-alignment: center-right;
+}
+
+.dialog-pane .button-bar .button {
+    -fx-min-width: 80px;
+    -fx-margin: 0 5px;
+}

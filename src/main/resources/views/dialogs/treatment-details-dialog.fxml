@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<?import java.net.URL?>
+<DialogPane fx:id="dialogPane" xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@../../css/patient-view.css"
+            fx:controller="com.nirwan.dentalclinic.controllers.dialogs.TreatmentDetailsDialogController">
+    
+    <header>
+        <VBox spacing="5">
+            <Label fx:id="titleLabel" styleClass="header-text"/>
+            <Label fx:id="subtitleLabel" style="-fx-text-fill: #666;"/>
+        </VBox>
+    </header>
+    
+    <content>
+        <TabPane tabClosingPolicy="UNAVAILABLE" style="-fx-padding: 10;">
+            <Tab text="Treatment Details" style="-fx-font-weight: bold;">
+                <VBox spacing="15">
+                    <GridPane hgap="10" vgap="10">
+                        <Label text="Treatment ID:" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.halignment="RIGHT"/>
+                        <Label fx:id="treatmentIdLabel" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        
+                        <Label text="Status:" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.halignment="RIGHT"/>
+                        <HBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <Label fx:id="statusLabel"/>
+                            <CheckBox fx:id="activeCheckBox" text="Active" onAction="#handleStatusChange"/>
+                        </HBox>
+                        
+                        <Label text="Description:" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.halignment="RIGHT" GridPane.valignment="TOP"/>
+                        <TextArea fx:id="descriptionArea" GridPane.columnIndex="1" GridPane.rowIndex="2" 
+                                 wrapText="true" prefRowCount="3" editable="false"/>
+                        
+                        <Label text="Date Created:" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.halignment="RIGHT"/>
+                        <Label fx:id="dateCreatedLabel" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                        
+                        <Label text="Last Updated:" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.halignment="RIGHT"/>
+                        <Label fx:id="lastUpdatedLabel" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                    </GridPane>
+                    
+                    <VBox spacing="5" style="-fx-padding: 10; -fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; -fx-border-width: 1; -fx-border-radius: 4;">
+                        <HBox spacing="20">
+                            <VBox spacing="5">
+                                <Label text="Total Cost" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="totalCostLabel" style="-fx-font-size: 1.2em;"/>
+                            </VBox>
+                            <VBox spacing="5">
+                                <Label text="Amount Paid" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="amountPaidLabel" style="-fx-font-size: 1.2em; -fx-text-fill: #2e7d32;"/>
+                            </VBox>
+                            <VBox spacing="5">
+                                <Label text="Amount Pending" style="-fx-font-weight: bold;"/>
+                                <Label fx:id="amountPendingLabel" style="-fx-font-size: 1.2em; -fx-text-fill: #d32f2f; -fx-font-weight: bold;"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </VBox>
+            </Tab>
+            
+            <Tab text="Payment History" style="-fx-font-weight: bold;">
+                <VBox spacing="10">
+                    <HBox spacing="10" alignment="CENTER_RIGHT">
+                        <Label text="Record New Payment" style="-fx-font-weight: bold;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="+ Add Payment" onAction="#handleAddPayment" style="-fx-background-color: #4caf50; -fx-text-fill: white;"/>
+                    </HBox>
+                    
+                    <TableView fx:id="paymentsTable" style="-fx-table-cell-border-color: transparent;">
+                        <columns>
+                            <TableColumn fx:id="paymentDateCol" text="Date" prefWidth="120">
+                                <cellValueFactory><PropertyValueFactory property="paymentDate"/></cellValueFactory>
+                            </TableColumn>
+                            <TableColumn fx:id="amountCol" text="Amount" prefWidth="100">
+                                <cellValueFactory><PropertyValueFactory property="amount"/></cellValueFactory>
+                            </TableColumn>
+                            <TableColumn fx:id="methodCol" text="Method" prefWidth="120">
+                                <cellValueFactory><PropertyValueFactory property="paymentMethod"/></cellValueFactory>
+                            </TableColumn>
+                            <TableColumn fx:id="notesCol" text="Notes" prefWidth="200">
+                                <cellValueFactory><PropertyValueFactory property="notes"/></cellValueFactory>
+                            </TableColumn>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+            
+            <Tab text="Cost History" style="-fx-font-weight: bold;">
+                <VBox spacing="10">
+                    <TableView fx:id="costHistoryTable" style="-fx-table-cell-border-color: transparent;">
+                        <columns>
+                            <TableColumn fx:id="effectiveDateCol" text="Effective Date" prefWidth="120">
+                                <cellValueFactory><PropertyValueFactory property="effectiveDate"/></cellValueFactory>
+                            </TableColumn>
+                            <TableColumn fx:id="costCol" text="Cost" prefWidth="100">
+                                <cellValueFactory><PropertyValueFactory property="cost"/></cellValueFactory>
+                            </TableColumn>
+                            <TableColumn fx:id="statusCol" text="Status" prefWidth="100">
+                                <cellValueFactory><PropertyValueFactory property="status"/></cellValueFactory>
+                            </TableColumn>
+                            <TableColumn fx:id="costNotesCol" text="Notes" prefWidth="200">
+                                <cellValueFactory><PropertyValueFactory property="notes"/></cellValueFactory>
+                            </TableColumn>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+        </TabPane>
+        
+        <Label fx:id="errorLabel" styleClass="error" style="-fx-padding: 5 0 0 0;" wrapText="true"/>
+    </content>
+    
+    <stylesheets>
+        <URL value="@../../css/patient-view.css"/>
+    </stylesheets>
+</DialogPane>

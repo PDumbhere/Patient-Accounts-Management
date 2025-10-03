@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox fx:controller="com.nirwan.dentalclinic.controllers.PatientDialogController"
+      xmlns:fx="http://javafx.com/fxml"
+      prefWidth="500"
+      prefHeight="200"
+      minWidth="400"
+      minHeight="200"
+      spacing="10"
+      style="-fx-padding: 20;">
+    
+    <Label text="Add New Patient" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+    
+    <GridPane vgap="10" hgap="10" GridPane.hgrow="ALWAYS">
+        <padding>
+            <Insets top="10" right="10" bottom="10" left="0"/>
+        </padding>
+        
+        <!-- Row 0 -->
+        <Label text="First Name:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+        <TextField fx:id="firstNameField" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.hgrow="ALWAYS"/>
+        
+        <!-- Row 1 -->
+        <Label text="Last Name:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <TextField fx:id="lastNameField" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.hgrow="ALWAYS"/>
+    </GridPane>
+    
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancel" onAction="#handleCancel" style="-fx-min-width: 80;" />
+        <Button text="Save" onAction="#handleSave" defaultButton="true" style="-fx-min-width: 80; -fx-background-color: #4CAF50; -fx-text-fill: white;" />
+    </HBox>
+</VBox>
