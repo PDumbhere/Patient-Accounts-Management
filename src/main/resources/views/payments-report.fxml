@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nirwan.dentalclinic.controllers.reports.PaymentsReportController"
+            style="-fx-padding: 10;">
+    <top>
+        <VBox spacing="8">
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Date Range:"/>
+                <ComboBox fx:id="datePresetCombo" prefWidth="180"/>
+                <Label fx:id="fromLabel" text="From:"/>
+                <DatePicker fx:id="fromDatePicker"/>
+                <Label fx:id="toLabel" text="To:"/>
+                <DatePicker fx:id="toDatePicker"/>
+                <Label text="Treatment:"/>
+                <TextField fx:id="treatmentFilterField" promptText="Filter by treatment"/>
+                <Label text="Payment Mode:"/>
+                <ComboBox fx:id="paymentModeCombo" prefWidth="160"/>
+                <Region HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <Separator/>
+        </VBox>
+    </top>
+
+    <center>
+        <TableView fx:id="paymentsTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colDate" text="Date" prefWidth="140">
+                    <cellValueFactory><PropertyValueFactory property="dateTime"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn fx:id="colPatient" text="Patient" prefWidth="160">
+                    <cellValueFactory><PropertyValueFactory property="patientName"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn fx:id="colTreatment" text="Treatment" prefWidth="200">
+                    <cellValueFactory><PropertyValueFactory property="treatmentDescription"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn fx:id="colAmount" text="Amount" prefWidth="120">
+                    <cellValueFactory><PropertyValueFactory property="amount"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn fx:id="colMode" text="Mode" prefWidth="120">
+                    <cellValueFactory><PropertyValueFactory property="paymentMethod"/></cellValueFactory>
+                </TableColumn>
+            </columns>
+        </TableView>
+    </center>
+
+    <bottom>
+        <VBox spacing="6" style="-fx-padding: 10 0 0 0;">
+            <Separator/>
+            <HBox spacing="20" alignment="CENTER_LEFT">
+                <Label text="Total Earnings:"/>
+                <Label fx:id="totalEarningsLabel" style="-fx-font-weight: bold;"/>
+                <Label text="Cash:"/>
+                <Label fx:id="totalCashLabel" style="-fx-text-fill: #2e7d32; -fx-font-weight: bold;"/>
+                <Label text="Online:"/>
+                <Label fx:id="totalOnlineLabel" style="-fx-text-fill: #1976d2; -fx-font-weight: bold;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Close" onAction="#handleClose"/>
+            </HBox>
+        </VBox>
+    </bottom>
+</BorderPane>

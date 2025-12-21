@@ -41,6 +41,28 @@
 
 .table-row-cell:selected {
     -fx-background-color: #e3f2fd;
+    -fx-background-insets: 0;
+}
+
+/* Ensure selected row text remains readable */
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #212529;
+}
+.table-cell:selected {
+    -fx-background-color: transparent; /* avoid double selection paint that can look blurry */
+    -fx-text-fill: #212529;
+}
+
+/* Remove any inset/focus visuals that may appear like blur on click */
+.table-row-cell:focused {
+    -fx-background-insets: 0;
+}
+.table-view:focused .table-row-cell:focused {
+    -fx-background-insets: 0;
+}
+.table-view .table-row-cell:filled:selected:focused,
+.table-view .table-row-cell:filled:selected {
+    -fx-background-color: #e3f2fd;
 }
 
 /* Button styles */

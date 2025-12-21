@@ -1,7 +1,9 @@
 package com.nirwan.dentalclinic.repository;
 
 import com.nirwan.dentalclinic.database.DatabaseConnection;
+import com.nirwan.dentalclinic.models.Payment;
 import com.nirwan.dentalclinic.models.Treatment;
+import com.nirwan.dentalclinic.models.TreatmentCost;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -21,16 +23,17 @@ public class TreatmentDao {
     private static final String SELECT_TREATMENTS_BY_PATIENT = 
         "SELECT * FROM Treatment WHERE patient_id = ? AND is_deleted = false ORDER BY is_active DESC, created_at DESC";
     
+    // Note: amount_pending is a generated column in DB, do not set it explicitly
     private static final String UPDATE_TREATMENT_SQL = 
-        "UPDATE Treatment SET description = ?, total_amount = ?, amount_paid = ?, amount_pending = ?, " +
+        "UPDATE Treatment SET description = ?, total_amount = ?, amount_paid = ?, " +
         "is_active = ?, updated_at = ? WHERE id = ?";
     
     private static final String SOFT_DELETE_TREATMENT_SQL = 
         "UPDATE Treatment SET is_deleted = true, updated_at = ? WHERE id = ?";
     
+    // Do not update amount_pending (generated). Let DB compute it.
     private static final String ADD_PAYMENT_SQL = 
-        "UPDATE Treatment SET amount_paid = amount_paid + ?, amount_pending = GREATEST(0, total_amount - (amount_paid + ?)), " +
-        "updated_at = ? WHERE id = ?";
+        "UPDATE Treatment SET amount_paid = amount_paid + ?, updated_at = ? WHERE id = ?";
     
     private static final String ADD_TREATMENT_COST_SQL = 
         "INSERT INTO TreatmentCost (treatment_id, cost, status, effective_from, notes) " +
@@ -39,6 +42,15 @@ public class TreatmentDao {
     private static final String ADD_PAYMENT_RECORD_SQL = 
         "INSERT INTO Payment (treatment_id, amount, payment_date, payment_method, notes) " +
         "VALUES (?, ?, ?, ?, ?)";
+
+    private static final String SOFT_DELETE_PAYMENT_SQL =
+        "UPDATE Payment SET is_deleted = true, updated_at = ? WHERE id = ?";
+
+    private static final String SELECT_PAYMENTS_BY_TREATMENT =
+        "SELECT * FROM Payment WHERE treatment_id = ? AND is_deleted = false ORDER BY payment_date DESC";
+
+    private static final String SELECT_COSTS_BY_TREATMENT =
+        "SELECT * FROM TreatmentCost WHERE treatment_id = ? AND is_deleted = false ORDER BY effective_from DESC";
 
     /**
      * Saves a new treatment to the database
@@ -149,6 +161,168 @@ public class TreatmentDao {
     }
 
     /**
+     * Updates the status of the latest TreatmentCost row for the given treatment code
+     * to PAID / PARTIALLY_PAID / PENDING based on Treatment totals.
+     */
+    private void updateLatestTreatmentCostStatus(Connection conn, String treatmentCode) throws SQLException {
+        String sql = "UPDATE TreatmentCost tc " +
+                "JOIN Treatment t ON t.treatment_id = tc.treatment_id " +
+                "JOIN (SELECT treatment_id, MAX(effective_from) AS max_eff FROM TreatmentCost WHERE treatment_id = ? AND is_deleted = false) latest " +
+                "  ON tc.treatment_id = latest.treatment_id AND tc.effective_from = latest.max_eff " +
+                // Consider small rounding differences when comparing currency amounts
+                "SET tc.status = CASE WHEN ABS(t.total_amount - t.amount_paid) <= 0.005 OR t.amount_paid > t.total_amount THEN 'PAID' " +
+                "                      WHEN t.amount_paid > 0 THEN 'PARTIALLY_PAID' " +
+                "                      ELSE 'PENDING' END " +
+                "WHERE tc.treatment_id = ? AND tc.is_deleted = false";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, treatmentCode);
+            ps.setString(2, treatmentCode);
+            ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Records a payment for a treatment, using both the numeric primary key (for Treatment update)
+     * and the string code (for Payment.treatment_id foreign key)
+     */
+    public boolean recordPayment(Treatment treatment, double amount, String paymentMethod, String notes) {
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement updateStmt = conn.prepareStatement(ADD_PAYMENT_SQL);
+                 PreparedStatement paymentStmt = conn.prepareStatement(ADD_PAYMENT_RECORD_SQL)) {
+
+                // Update treatment (by numeric id)
+                updateStmt.setDouble(1, amount);
+                updateStmt.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+                updateStmt.setInt(3, treatment.getId());
+
+                int updated = updateStmt.executeUpdate();
+
+                if (updated > 0) {
+                    // Record payment (by string treatment code)
+                    paymentStmt.setString(1, treatment.getTreatmentId());
+                    paymentStmt.setDouble(2, amount);
+                    paymentStmt.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+                    paymentStmt.setString(4, paymentMethod);
+                    paymentStmt.setString(5, notes);
+
+                    paymentStmt.executeUpdate();
+
+                    // Update latest TreatmentCost status based on current Treatment totals
+                    updateLatestTreatmentCostStatus(conn, treatment.getTreatmentId());
+                    conn.commit();
+                    return true;
+                }
+
+                conn.rollback();
+                return false;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error recording payment: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Returns all payment records for a given treatment code (treatment_id)
+     */
+    public List<Payment> getPaymentsForTreatment(String treatmentId) {
+        List<Payment> payments = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SELECT_PAYMENTS_BY_TREATMENT)) {
+            stmt.setString(1, treatmentId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    payments.add(mapResultSetToPayment(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching payments: " + e.getMessage());
+        }
+        return payments;
+    }
+
+    /**
+     * Returns treatment cost history for a given treatment code (treatment_id)
+     */
+    public List<TreatmentCost> getCostHistoryForTreatment(String treatmentId) {
+        List<TreatmentCost> costs = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SELECT_COSTS_BY_TREATMENT)) {
+            stmt.setString(1, treatmentId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    costs.add(mapResultSetToTreatmentCost(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching treatment costs: " + e.getMessage());
+        }
+        return costs;
+    }
+
+    /**
+     * Soft deletes the given payment and decrements Treatment.amount_paid accordingly.
+     * Uses the string treatment code for FK consistency.
+     */
+    public boolean deletePayment(Payment payment) {
+        if (payment == null) return false;
+        String treatmentCode = payment.getTreatmentId();
+        double amount = payment.getAmount();
+        if (treatmentCode == null) {
+            // Fallback: try to resolve code from DB via payment id
+            // For simplicity, require treatmentCode on the Payment object
+            System.err.println("Payment missing treatmentCode; cannot delete reliably.");
+            return false;
+        }
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement del = conn.prepareStatement(SOFT_DELETE_PAYMENT_SQL);
+                 PreparedStatement dec = conn.prepareStatement(
+                         "UPDATE Treatment SET amount_paid = GREATEST(0, amount_paid - ?), updated_at = ? WHERE treatment_id = ?")) {
+
+                // Soft delete payment
+                del.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+                del.setInt(2, payment.getId());
+                int d = del.executeUpdate();
+
+                if (d > 0) {
+                    // Decrement treatment.amount_paid by this payment amount
+                    dec.setDouble(1, amount);
+                    dec.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+                    dec.setString(3, treatmentCode);
+                    int u = dec.executeUpdate();
+                    if (u > 0) {
+                        // Refresh latest cost status
+                        updateLatestTreatmentCostStatus(conn, treatmentCode);
+                        conn.commit();
+                        return true;
+                    }
+                }
+
+                conn.rollback();
+                return false;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error deleting payment: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Finds a treatment by its ID
      * @param id the treatment ID
      * @return an Optional containing the treatment if found
@@ -203,10 +377,9 @@ public class TreatmentDao {
             stmt.setString(1, treatment.getDescription());
             stmt.setDouble(2, treatment.getTotalAmount());
             stmt.setDouble(3, treatment.getAmountPaid());
-            stmt.setDouble(4, treatment.getAmountPending());
-            stmt.setBoolean(5, treatment.isActive());
-            stmt.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
-            stmt.setInt(7, treatment.getId());
+            stmt.setBoolean(4, treatment.isActive());
+            stmt.setTimestamp(5, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setInt(6, treatment.getId());
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -251,21 +424,29 @@ public class TreatmentDao {
                 
                 // Update treatment amounts
                 updateStmt.setDouble(1, amount);
-                updateStmt.setDouble(2, amount);
-                updateStmt.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
-                updateStmt.setInt(4, treatmentId);
+                updateStmt.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+                updateStmt.setInt(3, treatmentId);
                 
                 int updated = updateStmt.executeUpdate();
                 
                 if (updated > 0) {
-                    // Record payment
-                    paymentStmt.setInt(1, treatmentId);
+                    // Lookup string treatment code for Payment FK
+                    String treatmentCode = findById(treatmentId).map(Treatment::getTreatmentId).orElse(null);
+                    if (treatmentCode == null) {
+                        conn.rollback();
+                        return false;
+                    }
+                    // Record payment with string treatment_id
+                    paymentStmt.setString(1, treatmentCode);
                     paymentStmt.setDouble(2, amount);
                     paymentStmt.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
                     paymentStmt.setString(4, paymentMethod);
                     paymentStmt.setString(5, notes);
                     
                     paymentStmt.executeUpdate();
+
+                    // Update latest TreatmentCost status based on current Treatment totals
+                    updateLatestTreatmentCostStatus(conn, treatmentCode);
                     conn.commit();
                     return true;
                 }
@@ -285,41 +466,45 @@ public class TreatmentDao {
     }
 
     /**
-     * Adds a new treatment cost record
-     * @param treatmentId the treatment ID
-     * @param cost the new cost
-     * @param notes optional notes about the cost change
-     * @return true if the cost was added successfully
+     * Adds a new treatment cost record and updates Treatment.total_amount.
+     * Status is computed based on amount_paid vs new cost.
      */
-    public boolean addTreatmentCost(int treatmentId, double cost, String notes) {
+    public boolean addTreatmentCost(Treatment treatment, double cost, String notes) {
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             conn.setAutoCommit(false);
-            
+
             try (PreparedStatement stmt = conn.prepareStatement(ADD_TREATMENT_COST_SQL)) {
-                stmt.setInt(1, treatmentId);
+                String status = (Math.abs(cost - treatment.getAmountPaid()) <= 0.005 || treatment.getAmountPaid() > cost)
+                        ? "PAID"
+                        : (treatment.getAmountPaid() > 0 ? "PARTIALLY_PAID" : "PENDING");
+
+                stmt.setString(1, treatment.getTreatmentId());
                 stmt.setDouble(2, cost);
-                stmt.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
-                stmt.setString(4, notes);
-                
+                stmt.setString(3, status);
+                stmt.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
+                stmt.setString(5, notes);
+
                 int inserted = stmt.executeUpdate();
-                
+
                 if (inserted > 0) {
-                    // Update the treatment's total amount
+                    // Update treatment total_amount
                     try (PreparedStatement updateStmt = conn.prepareStatement(
                             "UPDATE Treatment SET total_amount = ?, updated_at = ? WHERE id = ?")) {
-                        
+
                         updateStmt.setDouble(1, cost);
                         updateStmt.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
-                        updateStmt.setInt(3, treatmentId);
-                        
+                        updateStmt.setInt(3, treatment.getId());
+
                         int updated = updateStmt.executeUpdate();
                         if (updated > 0) {
+                            // Ensure the latest cost row has correct status after DB update side effects
+                            updateLatestTreatmentCostStatus(conn, treatment.getTreatmentId());
                             conn.commit();
                             return true;
                         }
                     }
                 }
-                
+
                 conn.rollback();
                 return false;
             } catch (SQLException e) {
@@ -351,5 +536,48 @@ public class TreatmentDao {
         treatment.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         treatment.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
         return treatment;
+    }
+
+    private Payment mapResultSetToPayment(ResultSet rs) throws SQLException {
+        Payment p = new Payment();
+        p.setId(rs.getInt("id"));
+        // Some code paths use string treatment_id, align here
+        try {
+            p.setTreatmentId(rs.getString("treatment_id"));
+        } catch (SQLException ignored) { }
+        p.setAmount(rs.getDouble("amount"));
+        Timestamp ts = rs.getTimestamp("payment_date");
+        if (ts != null) p.setPaymentDate(ts.toLocalDateTime());
+        p.setPaymentMethod(rs.getString("payment_method"));
+        // transaction_reference might not exist; guard it
+        try { p.setTransactionReference(rs.getString("transaction_reference")); } catch (SQLException ignored) {}
+        p.setNotes(rs.getString("notes"));
+        try { p.setDeleted(rs.getBoolean("is_deleted")); } catch (SQLException ignored) {}
+        try {
+            Timestamp c = rs.getTimestamp("created_at");
+            if (c != null) p.setCreatedAt(c.toLocalDateTime());
+            Timestamp u = rs.getTimestamp("updated_at");
+            if (u != null) p.setUpdatedAt(u.toLocalDateTime());
+        } catch (SQLException ignored) {}
+        return p;
+    }
+
+    private TreatmentCost mapResultSetToTreatmentCost(ResultSet rs) throws SQLException {
+        TreatmentCost tc = new TreatmentCost();
+        tc.setId(rs.getInt("id"));
+        try { tc.setTreatmentId(rs.getString("treatment_id")); } catch (SQLException ignored) {}
+        tc.setCost(rs.getDouble("cost"));
+        tc.setStatus(rs.getString("status"));
+        tc.setNotes(rs.getString("notes"));
+        Timestamp eff = rs.getTimestamp("effective_from");
+        if (eff != null) tc.setEffectiveFrom(eff.toLocalDateTime());
+        try { tc.setDeleted(rs.getBoolean("is_deleted")); } catch (SQLException ignored) {}
+        try {
+            Timestamp c = rs.getTimestamp("created_at");
+            if (c != null) tc.setCreatedAt(c.toLocalDateTime());
+            Timestamp u = rs.getTimestamp("updated_at");
+            if (u != null) tc.setUpdatedAt(u.toLocalDateTime());
+        } catch (SQLException ignored) {}
+        return tc;
     }
 }

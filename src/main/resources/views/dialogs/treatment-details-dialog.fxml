@@ -19,7 +19,8 @@
     </header>
     
     <content>
-        <TabPane tabClosingPolicy="UNAVAILABLE" style="-fx-padding: 10;">
+        <VBox spacing="8" style="-fx-padding: 10;">
+            <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
             <Tab text="Treatment Details" style="-fx-font-weight: bold;">
                 <VBox spacing="15">
                     <GridPane hgap="10" vgap="10">
@@ -27,9 +28,11 @@
                         <Label fx:id="treatmentIdLabel" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
                         
                         <Label text="Status:" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.halignment="RIGHT"/>
-                        <HBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                        <HBox spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="1" alignment="CENTER_LEFT">
                             <Label fx:id="statusLabel"/>
-                            <CheckBox fx:id="activeCheckBox" text="Active" onAction="#handleStatusChange"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="markCompletedBtn" text="Mark Completed" onAction="#handleMarkCompleted"
+                                    style="-fx-background-color: #2e7d32; -fx-text-fill: white;"/>
                         </HBox>
                         
                         <Label text="Description:" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.halignment="RIGHT" GridPane.valignment="TOP"/>
@@ -67,7 +70,9 @@
                     <HBox spacing="10" alignment="CENTER_RIGHT">
                         <Label text="Record New Payment" style="-fx-font-weight: bold;"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Button text="+ Add Payment" onAction="#handleAddPayment" style="-fx-background-color: #4caf50; -fx-text-fill: white;"/>
+                        <Button fx:id="deletePaymentBtn" text="Delete Payment" onAction="#handleDeletePayment" disable="true"
+                                style="-fx-background-color: #e53935; -fx-text-fill: white;"/>
+                        <Button fx:id="addPaymentBtn" text="+ Add Payment" onAction="#handleAddPayment" style="-fx-background-color: #4caf50; -fx-text-fill: white;"/>
                     </HBox>
                     
                     <TableView fx:id="paymentsTable" style="-fx-table-cell-border-color: transparent;">
@@ -91,6 +96,11 @@
             
             <Tab text="Cost History" style="-fx-font-weight: bold;">
                 <VBox spacing="10">
+                    <HBox spacing="10" alignment="CENTER_RIGHT">
+                        <Label text="Adjust Treatment Cost" style="-fx-font-weight: bold;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="updateCostBtn" text="+ Update Cost" onAction="#handleUpdateCost" style="-fx-background-color: #1976d2; -fx-text-fill: white;"/>
+                    </HBox>
                     <TableView fx:id="costHistoryTable" style="-fx-table-cell-border-color: transparent;">
                         <columns>
                             <TableColumn fx:id="effectiveDateCol" text="Effective Date" prefWidth="120">
@@ -109,9 +119,9 @@
                     </TableView>
                 </VBox>
             </Tab>
-        </TabPane>
-        
-        <Label fx:id="errorLabel" styleClass="error" style="-fx-padding: 5 0 0 0;" wrapText="true"/>
+            </TabPane>
+            <Label fx:id="errorLabel" styleClass="error" style="-fx-padding: 5 0 0 0;" wrapText="true"/>
+        </VBox>
     </content>
     
     <stylesheets>

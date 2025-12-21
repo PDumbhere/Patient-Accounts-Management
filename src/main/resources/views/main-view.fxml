@@ -16,6 +16,11 @@
         <VBox spacing="10" styleClass="header">
             <Label text="Nirwan Dental Clinic - Account Management" styleClass="header-title" />
             <Separator styleClass="header-separator" />
+            <HBox spacing="8" style="-fx-padding: 6 0 0 0;">
+                <Label text="Search:"/>
+                <TextField fx:id="searchField" promptText="Type patient name..." HBox.hgrow="ALWAYS"/>
+                <Button text="Clear" onAction="#clearSearch"/>
+            </HBox>
         </VBox>
     </top>
     
@@ -49,6 +54,7 @@
             <Button text="Add Patient" fx:id="btnAddPatient" styleClass="action-button" />
             <Button text="Add Treatment" fx:id="btnAddTreatment" styleClass="action-button" />
             <Button text="Record Payment" fx:id="btnRecordPayment" styleClass="action-button" />
+            <Button text="Payments Report" fx:id="btnPaymentsReport" onAction="#openPaymentsReport" styleClass="action-button" />
             <Button text="Export to Excel" fx:id="btnExportData" styleClass="action-button" />
         </HBox>
     </bottom>

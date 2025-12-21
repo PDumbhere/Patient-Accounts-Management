@@ -16,9 +16,10 @@ public class JavaFXApplication extends Application {
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/main-view.fxml"));
             Parent root = fxmlLoader.load();
             
-            // Get the controller and set the primary stage
+            // Get the controller and set the primary stage and main view root
             com.nirwan.dentalclinic.controllers.MainController controller = fxmlLoader.getController();
             controller.setPrimaryStage(stage);
+            controller.setMainViewRoot(root);
             
             System.out.println("FXML loaded and controller initialized successfully");
 

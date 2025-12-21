@@ -1,11 +1,13 @@
 package com.nirwan.dentalclinic.controllers;
 
 import com.nirwan.dentalclinic.controllers.dialogs.NewTreatmentGridController;
+import com.nirwan.dentalclinic.controllers.dialogs.TreatmentDetailsDialogController;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import com.nirwan.dentalclinic.models.Patient;
 import com.nirwan.dentalclinic.models.Treatment;
-import com.nirwan.dentalclinic.repository.PatientDao;
 import com.nirwan.dentalclinic.repository.TreatmentDao;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -20,9 +22,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
-import java.sql.SQLException;
 import java.text.NumberFormat;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Optional;
@@ -51,7 +51,6 @@ public class PatientViewController implements Initializable {
     @FXML private TableColumn<Treatment, Boolean> statusCol;
     
     private final TreatmentDao treatmentDao = new TreatmentDao();
-    private final PatientDao patientDao = new PatientDao();
     private Patient currentPatient;
     private final ObservableList<Treatment> treatments = FXCollections.observableArrayList();
     private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
@@ -74,23 +73,23 @@ public class PatientViewController implements Initializable {
         treatmentsTable.setRowFactory(tv -> {
             TableRow<Treatment> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
-                if (!row.isEmpty() && event.getClickCount() == 1) {
-                    handleTreatmentRowClick(event);
+                if (!row.isEmpty() && event.getClickCount() == 2) {
+                    handleTreatmentDoubleClick(row);
                 }
             });
             return row;
         });
-        
+
         // Set up cell value factories
         treatmentIdCol.setCellValueFactory(new PropertyValueFactory<>("treatmentId"));
         descriptionCol.setCellValueFactory(new PropertyValueFactory<>("description"));
-        dateCol.setCellValueFactory(cellData -> 
+        dateCol.setCellValueFactory(cellData ->
             new SimpleStringProperty(cellData.getValue().getCreatedAt().format(dateFormatter)));
         totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         paidAmountCol.setCellValueFactory(new PropertyValueFactory<>("amountPaid"));
         pendingAmountCol.setCellValueFactory(new PropertyValueFactory<>("amountPending"));
         statusCol.setCellValueFactory(new PropertyValueFactory<>("active"));
-        
+
         // Format currency columns
         totalAmountCol.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -99,7 +98,7 @@ public class PatientViewController implements Initializable {
                 setText(empty || amount == null ? "" : currencyFormat.format(amount));
             }
         });
-        
+
         paidAmountCol.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(Double amount, boolean empty) {
@@ -107,7 +106,7 @@ public class PatientViewController implements Initializable {
                 setText(empty || amount == null ? "" : currencyFormat.format(amount));
             }
         });
-        
+
         pendingAmountCol.setCellFactory(tc -> new TableCell<>() {
             @Override
             protected void updateItem(Double amount, boolean empty) {
@@ -120,7 +119,7 @@ public class PatientViewController implements Initializable {
                 }
             }
         });
-        
+
         // Format status column
         statusCol.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -135,7 +134,27 @@ public class PatientViewController implements Initializable {
             }
         });
     }
-    
+
+    private void handleTreatmentDoubleClick(TableRow<Treatment> row) {
+        if (row.isEmpty()) return;
+
+        Treatment treatment = row.getItem();
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            // Load the correct FXML which already specifies fx:controller
+            loader.setLocation(getClass().getResource("/views/dialogs/treatment-details-dialog.fxml"));
+            loader.load();
+
+            // Get controller created by FXML and pass the selected treatment
+            TreatmentDetailsDialogController controller = loader.getController();
+            controller.setTreatment(treatment);
+
+            // Show the dialog, owned by the current window
+            controller.showAndWait(patientNameLabel.getScene().getWindow());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     private void loadPatientData() {
         if (currentPatient == null) return;
         
@@ -220,9 +239,38 @@ public class PatientViewController implements Initializable {
     
     @FXML
     private void handleBackToList() {
-        // Get the current stage (window) and close it
-        Stage stage = (Stage) patientNameLabel.getScene().getWindow();
-        stage.close();
+        try {
+            // Get the current stage
+            Stage stage = (Stage) patientNameLabel.getScene().getWindow();
+            
+            // Get the main controller and its root
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/main-view.fxml"));
+            Parent root = loader.load();
+            MainController mainController = loader.getController();
+            
+            // IMPORTANT: provide the current Stage to the (new) MainController instance
+            mainController.setPrimaryStage(stage);
+            mainController.setMainViewRoot(root);
+            
+            // Set the main view as the root of the current scene
+            Scene currentScene = stage.getScene();
+            if (currentScene == null) {
+                currentScene = new Scene(root);
+                stage.setScene(currentScene);
+            } else {
+                currentScene.setRoot(root);
+            }
+            
+            // Update the stage
+            stage.setTitle("Dental Clinic - Patient Accounts");
+            stage.sizeToScene();
+            stage.centerOnScreen();
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Fallback to just close the window if there's an error
+            Stage stage = (Stage) patientNameLabel.getScene().getWindow();
+            stage.close();
+        }
     }
     
     @FXML

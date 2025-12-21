@@ -9,6 +9,8 @@ import javafx.stage.Stage;
 import com.nirwan.dentalclinic.repository.PatientDao;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -40,9 +42,13 @@ public class MainController {
     @FXML private Button btnAddTreatment;
     @FXML private Button btnRecordPayment;
     @FXML private Button btnExportData;
+    @FXML private TextField searchField;
 
     private final ObservableList<PatientTreatmentDto> patientData = FXCollections.observableArrayList();
     private Stage primaryStage;
+    private Parent mainViewRoot;
+    private FilteredList<PatientTreatmentDto> filtered;
+    private SortedList<PatientTreatmentDto> sorted;
 
     /**
      * Sets the primary stage for this controller
@@ -51,12 +57,65 @@ public class MainController {
     public void setPrimaryStage(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
+    
+    /**
+     * Sets the main view root for navigation
+     * @param root The root node of the main view
+     */
+    public void setMainViewRoot(Parent root) {
+        this.mainViewRoot = root;
+    }
+
+    /**
+     * Safely gets the current Stage by deriving it from any available control.
+     */
+    private Stage getStage() {
+        // Try from patient table
+        if (patientTable != null && patientTable.getScene() != null) {
+            return (Stage) patientTable.getScene().getWindow();
+        }
+        // Try from buttons
+        if (btnAddPatient != null && btnAddPatient.getScene() != null) {
+            return (Stage) btnAddPatient.getScene().getWindow();
+        }
+        if (btnAddTreatment != null && btnAddTreatment.getScene() != null) {
+            return (Stage) btnAddTreatment.getScene().getWindow();
+        }
+        if (btnRecordPayment != null && btnRecordPayment.getScene() != null) {
+            return (Stage) btnRecordPayment.getScene().getWindow();
+        }
+        if (btnExportData != null && btnExportData.getScene() != null) {
+            return (Stage) btnExportData.getScene().getWindow();
+        }
+        // Fallback to primaryStage if available
+        return primaryStage;
+    }
 
     @FXML
     public void initialize() {
         setupTableColumns();
+        setupFiltering();
         loadPatientData();
         setupButtonActions();
+    }
+
+    private void setupFiltering() {
+        // Initialize filtered and sorted lists
+        filtered = new FilteredList<>(patientData, dto -> true);
+        sorted = new SortedList<>(filtered);
+        sorted.comparatorProperty().bind(patientTable.comparatorProperty());
+        patientTable.setItems(sorted);
+
+        if (searchField != null) {
+            searchField.textProperty().addListener((obs, oldV, newV) -> {
+                final String q = newV == null ? "" : newV.trim().toLowerCase();
+                filtered.setPredicate(dto -> {
+                    if (q.isEmpty()) return true;
+                    String name = dto.getName() != null ? dto.getName().toLowerCase() : "";
+                    return name.contains(q);
+                });
+            });
+        }
     }
 
     private void setupTableColumns() {
@@ -230,33 +289,41 @@ public class MainController {
         System.out.println("Loading patient data...");
         patientData.clear();
         // Query to get the latest treatment for each patient with the most recent treatment date
-        String sql = "WITH LatestTreatment AS (\n" +
-                   "    SELECT t.*, \n" +
-                   "           ROW_NUMBER() OVER (PARTITION BY p.id ORDER BY t.updated_at DESC) as rn,\n" +
-                   "           (\n" +
-                   "               SELECT status \n" +
-                   "               FROM TreatmentCost tc \n" +
-                   "               WHERE tc.treatment_id = t.treatment_id \n" +
-                   "               ORDER BY tc.effective_from DESC \n" +
-                   "               LIMIT 1\n" +
-                   "           ) as status\n" +
-                   "    FROM Patient p\n" +
-                   "    JOIN Treatment t ON p.id = t.patient_id\n" +
-                   "    WHERE p.is_deleted = FALSE AND t.is_deleted = FALSE\n" +
-                   "),\n" +
-                   "LatestTreatmentWithDate AS (\n" +
-                   "    SELECT t.*, \n" +
-                   "           (SELECT MAX(p.payment_date) FROM Payment p WHERE p.treatment_id = t.treatment_id) as last_payment_date,\n" +
-                   "           t.updated_at as treatment_updated\n" +
-                   "    FROM LatestTreatment t\n" +
-                   "    WHERE t.rn = 1\n" +
-                   ")\n" +
-                   "SELECT p.id,p.name, t.treatment_id, t.description, t.total_amount, \n" +
-                   "       t.amount_paid, t.amount_pending, t.status, \n" +
-                   "       COALESCE(t.last_payment_date, t.treatment_updated) as treatment_date\n" +
-                   "FROM Patient p\n" +
-                   "Left JOIN LatestTreatmentWithDate t ON p.id = t.patient_id\n" +
-                   "ORDER BY p.name";
+        String sql = """
+            WITH LatestTreatment AS (
+                SELECT t.*,
+                       ROW_NUMBER() OVER (PARTITION BY p.id ORDER BY t.updated_at DESC) as rn,
+                       (
+                           SELECT status
+                           FROM TreatmentCost tc
+                           WHERE tc.treatment_id = t.treatment_id
+                           ORDER BY tc.effective_from DESC
+                           LIMIT 1
+                       ) as status
+                FROM Patient p
+                JOIN Treatment t ON p.id = t.patient_id
+                WHERE p.is_deleted = FALSE AND t.is_deleted = FALSE
+            ),
+            LatestTreatmentWithDate AS (
+                SELECT t.*,
+                       (SELECT MAX(p.payment_date) FROM Payment p WHERE p.treatment_id = t.treatment_id) as last_payment_date,
+                       t.updated_at as treatment_updated
+                FROM LatestTreatment t
+                WHERE t.rn = 1
+            )
+            SELECT p.id,
+                   p.name,
+                   t.treatment_id,
+                   t.description,
+                   t.total_amount,
+                   t.amount_paid,
+                   t.amount_pending,
+                   t.status,
+                   COALESCE(t.last_payment_date, t.treatment_updated) as treatment_date
+            FROM Patient p
+            LEFT JOIN LatestTreatmentWithDate t ON p.id = t.patient_id
+            ORDER BY p.name
+            """;
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -281,9 +348,17 @@ public class MainController {
                 
                 patientData.add(dto);
             }
-            patientTable.setItems(patientData);
+            // Items already set to sorted list; just refresh backing list
+            // patientTable.setItems(sorted) was set in setupFiltering()
         } catch (SQLException e) {
             showError("Database Error", "Error loading patient treatment data: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void clearSearch() {
+        if (searchField != null) {
+            searchField.clear();
         }
     }
 
@@ -299,7 +374,9 @@ public class MainController {
             Stage dialogStage = new Stage();
             dialogStage.setTitle("Add New Patient");
             dialogStage.initModality(Modality.WINDOW_MODAL);
-            dialogStage.initOwner(primaryStage);
+            // Derive owner from an existing node to avoid null primaryStage
+            Stage ownerStage = (Stage) patientTable.getScene().getWindow();
+            dialogStage.initOwner(ownerStage);
             dialogStage.setScene(new Scene(root));
             
             // Set the dialog stage in the controller
@@ -357,11 +434,18 @@ public class MainController {
                         Patient patient = patientOpt.get();
                         controller.setPatient(patient);
                         
-                        // Show patient view in the same window
-                        Scene scene = primaryStage.getScene();
-                        scene.setRoot(root);
-                        primaryStage.setTitle("Patient Details - " + patient.getName());
-                        primaryStage.sizeToScene();
+                        // Derive the stage from an existing control instead of relying on primaryStage
+                        Stage stage = (Stage) patientTable.getScene().getWindow();
+                        Scene currentScene = stage.getScene();
+                        if (currentScene == null) {
+                            currentScene = new Scene(root);
+                            stage.setScene(currentScene);
+                        } else {
+                            currentScene.setRoot(root);
+                        }
+                        stage.setTitle("Patient Details - " + patient.getName());
+                        stage.sizeToScene();
+                        stage.centerOnScreen();
                         return;
                     }
                 }
@@ -455,6 +539,33 @@ public class MainController {
     private void exportToExcel() {
         // TODO: Implement Excel export functionality
         showInfo("Export to Excel", "Export to Excel functionality will be implemented here.");
+    }
+    
+    @FXML
+    private void openPaymentsReport() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/payments-report.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = new Stage();
+            stage.setTitle("Payments Report");
+            stage.initModality(Modality.WINDOW_MODAL);
+            Stage owner = getStage();
+            if (owner != null) stage.initOwner(owner);
+            stage.setScene(new Scene(root));
+            stage.setResizable(true);
+            // Keep width same as main view and position near it
+            if (owner != null) {
+                double w = owner.getWidth();
+                if (w > 0) stage.setWidth(w);
+                // place slightly offset within screen bounds
+                stage.setX(owner.getX());
+                stage.setY(owner.getY() + 30);
+            }
+            stage.showAndWait();
+        } catch (IOException ex) {
+            showError("Error", "Could not open Payments Report: " + ex.getMessage());
+        }
     }
     
     private void showInfo(String title, String message) {
