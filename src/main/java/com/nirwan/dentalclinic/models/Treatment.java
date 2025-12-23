@@ -17,7 +17,7 @@ public class Treatment {
     private int id;
     private String treatmentId;
     private int patientId;
-    private String description;
+    private String treatmentName;
     private double totalAmount;
     private double amountPaid;
     private double amountPending;
@@ -31,10 +31,10 @@ public class Treatment {
     /**
      * Creates a new active treatment with current timestamps
      */
-    public Treatment(String treatmentId, int patientId, String description, double initialCost) {
+    public Treatment(String treatmentId, int patientId, String treatmentName, double initialCost) {
         this.treatmentId = treatmentId;
         this.patientId = patientId;
-        this.description = description;
+        this.treatmentName = treatmentName;
         this.totalAmount = initialCost;
         this.amountPaid = 0.0;
         this.amountPending = initialCost;

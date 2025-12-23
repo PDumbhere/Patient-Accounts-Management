@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public class TreatmentDao {
     private static final String INSERT_TREATMENT_SQL = 
-        "INSERT INTO Treatment (treatment_id, patient_id, description, total_amount, amount_paid, is_active, is_deleted, created_at, updated_at) " +
+        "INSERT INTO Treatment (treatment_id, patient_id, treatment_name, total_amount, amount_paid, is_active, is_deleted, created_at, updated_at) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     private static final String SELECT_TREATMENT_BY_ID = 
@@ -25,7 +25,7 @@ public class TreatmentDao {
     
     // Note: amount_pending is a generated column in DB, do not set it explicitly
     private static final String UPDATE_TREATMENT_SQL = 
-        "UPDATE Treatment SET description = ?, total_amount = ?, amount_paid = ?, " +
+        "UPDATE Treatment SET treatment_name = ?, total_amount = ?, amount_paid = ?, " +
         "is_active = ?, updated_at = ? WHERE id = ?";
     
     private static final String SOFT_DELETE_TREATMENT_SQL = 
@@ -81,7 +81,7 @@ public class TreatmentDao {
                 // Set parameters for treatment insertion
                 stmt.setString(1, treatment.getTreatmentId());
                 stmt.setInt(2, treatment.getPatientId());
-                stmt.setString(3, treatment.getDescription());
+                stmt.setString(3, treatment.getTreatmentName());
                 stmt.setDouble(4, treatment.getTotalAmount());
                 stmt.setDouble(5, treatment.getAmountPaid());
 //                stmt.setDouble(6, treatment.getAmountPending());
@@ -374,7 +374,7 @@ public class TreatmentDao {
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(UPDATE_TREATMENT_SQL)) {
             
-            stmt.setString(1, treatment.getDescription());
+            stmt.setString(1, treatment.getTreatmentName());
             stmt.setDouble(2, treatment.getTotalAmount());
             stmt.setDouble(3, treatment.getAmountPaid());
             stmt.setBoolean(4, treatment.isActive());
@@ -527,7 +527,7 @@ public class TreatmentDao {
         treatment.setId(rs.getInt("id"));
         treatment.setTreatmentId(rs.getString("treatment_id"));
         treatment.setPatientId(rs.getInt("patient_id"));
-        treatment.setDescription(rs.getString("description"));
+        treatment.setTreatmentName(rs.getString("treatment_name"));
         treatment.setTotalAmount(rs.getDouble("total_amount"));
         treatment.setAmountPaid(rs.getDouble("amount_paid"));
         treatment.setAmountPending(rs.getDouble("amount_pending"));

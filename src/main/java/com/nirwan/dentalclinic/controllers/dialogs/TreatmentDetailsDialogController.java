@@ -27,7 +27,7 @@ public class TreatmentDetailsDialogController implements Initializable {
     @FXML private Label treatmentIdLabel;
     @FXML private Label statusLabel;
     @FXML private Button markCompletedBtn;
-    @FXML private TextArea descriptionArea;
+    @FXML private Label descriptionArea;
     @FXML private Label dateCreatedLabel;
     @FXML private Label lastUpdatedLabel;
     @FXML private Label totalCostLabel;
@@ -228,7 +228,7 @@ public class TreatmentDetailsDialogController implements Initializable {
         if (deletePaymentBtn != null) deletePaymentBtn.setDisable(!editEnabled || paymentsTable.getSelectionModel().getSelectedItem() == null);
         if (updateCostBtn != null) updateCostBtn.setDisable(!editEnabled);
         
-        descriptionArea.setText(treatment.getDescription());
+        descriptionArea.setText(treatment.getTreatmentName());
         dateCreatedLabel.setText(treatment.getCreatedAt().format(dateFormatter));
         lastUpdatedLabel.setText(treatment.getUpdatedAt().format(dateFormatter));
         

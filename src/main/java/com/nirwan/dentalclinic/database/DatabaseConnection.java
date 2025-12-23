@@ -95,7 +95,7 @@ public class DatabaseConnection {
                         "    id INT PRIMARY KEY AUTO_INCREMENT,\n" +
                         "    treatment_id VARCHAR(255) UNIQUE NOT NULL,\n" +
                         "    patient_id INT NOT NULL,\n" +
-                        "    description TEXT,\n" +
+                        "    treatment_name TEXT,\n" +
                         "    total_amount DOUBLE NOT NULL,\n" +
                         "    amount_paid DOUBLE DEFAULT 0.0,\n" +
                         "    amount_pending DOUBLE GENERATED ALWAYS AS (total_amount - amount_paid) STORED,\n" +
@@ -151,7 +151,7 @@ public class DatabaseConnection {
                         "    p.name as patientName, " +
                         "    t.id as treatmentId, " +
                         "    t.treatment_id as treatmentReference, " +
-                        "    t.description as treatmentDescription, " +
+                        "    t.treatment_name as treatmentDescription, " +
                         "    t.total_amount as totalAmount, " +
                         "    t.amount_paid as amountPaid, " +
                         "    t.amount_pending as balancePayment, " +

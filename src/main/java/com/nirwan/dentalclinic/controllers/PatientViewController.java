@@ -82,7 +82,7 @@ public class PatientViewController implements Initializable {
 
         // Set up cell value factories
         treatmentIdCol.setCellValueFactory(new PropertyValueFactory<>("treatmentId"));
-        descriptionCol.setCellValueFactory(new PropertyValueFactory<>("description"));
+        descriptionCol.setCellValueFactory(new PropertyValueFactory<>("treatmentName"));
         dateCol.setCellValueFactory(cellData ->
             new SimpleStringProperty(cellData.getValue().getCreatedAt().format(dateFormatter)));
         totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
@@ -149,8 +149,13 @@ public class PatientViewController implements Initializable {
             TreatmentDetailsDialogController controller = loader.getController();
             controller.setTreatment(treatment);
 
-            // Show the dialog, owned by the current window
-            controller.showAndWait(patientNameLabel.getScene().getWindow());
+            // Show the dialog, owned by the current window, and refresh if data changed
+            boolean changed = controller.showAndWait(patientNameLabel.getScene().getWindow());
+            if (changed) {
+                // Reload treatments and header totals after updates in dialog
+                loadTreatments();
+                loadPatientData();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

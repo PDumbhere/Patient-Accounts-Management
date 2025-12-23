@@ -8,6 +8,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -16,7 +17,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 public class NewTreatmentGridController {
-    @FXML private TextArea descriptionField;
+    @FXML private ComboBox<String> treatmentCombo;
     @FXML private TextField costField;
     @FXML private TextField initialPaymentField;
     @FXML private ComboBox<String> paymentMethodCombo;
@@ -30,6 +31,41 @@ public class NewTreatmentGridController {
 
     @FXML
     public void initialize() {
+        // Build or populate treatment combo (if not injected by FXML, create and replace TextArea)
+        if (treatmentCombo == null) {
+            treatmentCombo = new ComboBox<>();
+        }
+        treatmentCombo.getItems().setAll(
+                "Consultation",
+                "Extraction",
+                "Root Canal Treatment",
+                "Implant",
+                "Ortho",
+                "Prostho",
+                "Cementation",
+                "Scaling",
+                "X-Ray"
+        );
+        treatmentCombo.setEditable(false);
+        if (treatmentCombo.getSelectionModel().isEmpty()) {
+            treatmentCombo.getSelectionModel().selectFirst();
+        }
+
+//        // Replace TextArea only if it exists (runtime swap path)
+//        if (descriptionField != null && treatmentCombo.getParent() == null && descriptionField.getParent() instanceof GridPane grid) {
+//            int idx = grid.getChildren().indexOf(descriptionField);
+//            GridPane.setColumnIndex(treatmentCombo, 1);
+//            GridPane.setRowIndex(treatmentCombo, 1);
+//            GridPane.setHgrow(treatmentCombo, Priority.ALWAYS);
+//            if (idx >= 0) {
+//                grid.getChildren().set(idx, treatmentCombo);
+//            } else {
+//                grid.getChildren().remove(descriptionField);
+//                grid.add(treatmentCombo, 1, 1);
+//            }
+//        }
+
+        // Payment methods
         paymentMethodCombo.getItems().addAll("Cash", "Credit Card", "Debit Card", "UPI", "Insurance");
         paymentMethodCombo.getSelectionModel().selectFirst();
     }
@@ -93,8 +129,8 @@ public class NewTreatmentGridController {
     private boolean validateForm() {
         StringBuilder errorMessage = new StringBuilder();
         
-        if (descriptionField.getText() == null || descriptionField.getText().trim().isEmpty()) {
-            errorMessage.append("Description is required.\n");
+        if (treatmentCombo == null || treatmentCombo.getValue() == null || treatmentCombo.getValue().trim().isEmpty()) {
+            errorMessage.append("Treatment is required.\n");
         }
         
         try {
@@ -140,7 +176,9 @@ public class NewTreatmentGridController {
             }
             
             // Get form values
-            String description = descriptionField.getText().trim();
+            String description = treatmentCombo != null && treatmentCombo.getValue() != null
+                    ? treatmentCombo.getValue().trim()
+                    : "";
             double cost = Double.parseDouble(costField.getText());
             double initialPayment = initialPaymentField.getText().isEmpty() ? 0 : 
                                  Double.parseDouble(initialPaymentField.getText());

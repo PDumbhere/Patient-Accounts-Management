@@ -52,8 +52,6 @@
     <bottom>
         <HBox spacing="10" alignment="CENTER" style="-fx-padding: 10 0 0 0;">
             <Button text="Add Patient" fx:id="btnAddPatient" styleClass="action-button" />
-            <Button text="Add Treatment" fx:id="btnAddTreatment" styleClass="action-button" />
-            <Button text="Record Payment" fx:id="btnRecordPayment" styleClass="action-button" />
             <Button text="Payments Report" fx:id="btnPaymentsReport" onAction="#openPaymentsReport" styleClass="action-button" />
             <Button text="Export to Excel" fx:id="btnExportData" styleClass="action-button" />
         </HBox>

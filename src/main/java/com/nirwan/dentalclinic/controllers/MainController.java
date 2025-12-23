@@ -39,8 +39,6 @@ public class MainController {
     @FXML private TableColumn<PatientTreatmentDto, String> colStatus;
     @FXML private TableColumn<PatientTreatmentDto, LocalDate> colTreatmentDate;
     @FXML private Button btnAddPatient;
-    @FXML private Button btnAddTreatment;
-    @FXML private Button btnRecordPayment;
     @FXML private Button btnExportData;
     @FXML private TextField searchField;
 
@@ -77,12 +75,6 @@ public class MainController {
         // Try from buttons
         if (btnAddPatient != null && btnAddPatient.getScene() != null) {
             return (Stage) btnAddPatient.getScene().getWindow();
-        }
-        if (btnAddTreatment != null && btnAddTreatment.getScene() != null) {
-            return (Stage) btnAddTreatment.getScene().getWindow();
-        }
-        if (btnRecordPayment != null && btnRecordPayment.getScene() != null) {
-            return (Stage) btnRecordPayment.getScene().getWindow();
         }
         if (btnExportData != null && btnExportData.getScene() != null) {
             return (Stage) btnExportData.getScene().getWindow();
@@ -314,7 +306,7 @@ public class MainController {
             SELECT p.id,
                    p.name,
                    t.treatment_id,
-                   t.description,
+                   t.treatment_name,
                    t.total_amount,
                    t.amount_paid,
                    t.amount_pending,
@@ -334,7 +326,7 @@ public class MainController {
                 dto.patientIdProperty().set(rs.getLong("id"));
                 dto.nameProperty().set(rs.getString("name"));
                 dto.treatmentIdProperty().set(rs.getString("treatment_id"));
-                dto.descriptionProperty().set(rs.getString("description"));
+                dto.descriptionProperty().set(rs.getString("treatment_name"));
                 dto.totalAmountProperty().set(rs.getDouble("total_amount"));
                 dto.amountPaidProperty().set(rs.getDouble("amount_paid"));
                 dto.amountPendingProperty().set(rs.getDouble("amount_pending"));
@@ -397,9 +389,9 @@ public class MainController {
     }
     
     private void setupButtonActions() {
-        btnAddPatient.setOnAction(event -> showAddPatientDialog());
-        btnAddTreatment.setOnAction(event -> showAddTreatmentDialog());
-        btnRecordPayment.setOnAction(event -> showRecordPaymentDialog());
+        if (btnAddPatient != null) {
+            btnAddPatient.setOnAction(event -> showAddPatientDialog());
+        }
         
         // Add double-click handler to the patient table
         patientTable.setRowFactory(tv -> {

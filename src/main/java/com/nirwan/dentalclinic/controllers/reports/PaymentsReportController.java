@@ -15,6 +15,20 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import javafx.stage.FileChooser;
+import java.util.prefs.Preferences;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class PaymentsReportController {
     @FXML private ComboBox<String> datePresetCombo;
@@ -36,6 +50,8 @@ public class PaymentsReportController {
 
     private final ObservableList<PaymentReportRow> rows = FXCollections.observableArrayList();
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
+    private final Preferences prefs = Preferences.userNodeForPackage(PaymentsReportController.class);
+    private static final String PREF_LAST_EXPORT_DIR = "payments_report_last_dir";
 
     @FXML
     public void initialize() {
@@ -142,8 +158,8 @@ public class PaymentsReportController {
         String treatmentLike = treatmentFilterField.getText() != null ? treatmentFilterField.getText().trim() : "";
 
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT p.name AS patient_name, t.description AS treatment_desc, ")
-           .append("pay.amount, pay.payment_method, pay.payment_date, t.description AS treatment ")
+        sql.append("SELECT p.name AS patient_name, t.treatment_name AS treatment_desc, ")
+           .append("pay.amount, pay.payment_method, pay.payment_date, t.treatment_name AS treatment ")
            .append("FROM Payment pay ")
            .append("JOIN Treatment t ON pay.treatment_id = t.treatment_id ")
            .append("JOIN Patient p ON t.patient_id = p.id ")
@@ -152,7 +168,7 @@ public class PaymentsReportController {
             sql.append("AND pay.payment_method = ? ");
         }
         if (!treatmentLike.isEmpty()) {
-            sql.append("AND LOWER(t.description) LIKE ? ");
+            sql.append("AND LOWER(t.treatment_name) LIKE ? ");
         }
         sql.append("ORDER BY pay.payment_date DESC");
 
@@ -214,6 +230,109 @@ public class PaymentsReportController {
         if (toLabel != null) {
             toLabel.setVisible(custom);
             toLabel.setManaged(custom);
+        }
+    }
+
+    @FXML
+    private void handleExport() {
+        if (paymentsTable == null || paymentsTable.getItems() == null || paymentsTable.getItems().isEmpty()) {
+            new Alert(Alert.AlertType.INFORMATION, "Nothing to export. Adjust filters to show some rows.").showAndWait();
+            return;
+        }
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Export Payments Report");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Workbook (*.xlsx)", "*.xlsx"));
+        fc.setInitialFileName("payments-report"
+                +LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
+                +".xlsx");
+        // Use last used directory if available
+        try {
+            String last = prefs.get(PREF_LAST_EXPORT_DIR, null);
+            if (last != null) {
+                File dir = new File(last);
+                if (dir.isDirectory()) fc.setInitialDirectory(dir);
+            }
+        } catch (Exception ignored) {}
+        File file = fc.showSaveDialog(paymentsTable.getScene().getWindow());
+        if (file == null) return;
+
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet("Payments");
+
+            // Header style
+            CellStyle headerStyle = wb.createCellStyle();
+            Font headerFont = wb.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor((short) 22); // light grey
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+
+            // Amount style
+            CellStyle amountStyle = wb.createCellStyle();
+            amountStyle.setDataFormat(wb.getCreationHelper().createDataFormat().getFormat("#,##0.00"));
+
+            int rowIdx = 0;
+            Row header = sheet.createRow(rowIdx++);
+            String[] headers = {"Date", "Patient", "Treatment", "Amount", "Mode"};
+            for (int i = 0; i < headers.length; i++) {
+                Cell c = header.createCell(i);
+                c.setCellValue(headers[i]);
+                c.setCellStyle(headerStyle);
+            }
+
+            for (PaymentReportRow r : paymentsTable.getItems()) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(r.getDateTime() != null ? dtf.format(r.getDateTime()) : "");
+                row.createCell(1).setCellValue(r.getPatientName() != null ? r.getPatientName() : "");
+                row.createCell(2).setCellValue(r.getTreatmentDescription() != null ? r.getTreatmentDescription() : "");
+                Cell amountCell = row.createCell(3);
+                amountCell.setCellValue(r.getAmount());
+                amountCell.setCellStyle(amountStyle);
+                row.createCell(4).setCellValue(r.getPaymentMethod() != null ? r.getPaymentMethod() : "");
+            }
+
+            // Total row (sum of Amount column)
+            Row totalRow = sheet.createRow(rowIdx+2);
+            // Bold style for total label
+            CellStyle totalLabelStyle = wb.createCellStyle();
+            Font totalFont = wb.createFont();
+            totalFont.setBold(true);
+            totalLabelStyle.setFont(totalFont);
+            totalLabelStyle.setFillForegroundColor((short) 22);
+            totalLabelStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            Cell totalLabelCell = totalRow.createCell(2); // column C: "Treatment" column position for label
+            totalLabelCell.setCellValue("Total");
+            totalLabelCell.setCellStyle(totalLabelStyle);
+
+            // Amount total with bold amount style
+            CellStyle totalAmountStyle = wb.createCellStyle();
+            totalAmountStyle.cloneStyleFrom(amountStyle);
+            Font totalAmountFont = wb.createFont();
+            totalAmountFont.setBold(true);
+            totalAmountStyle.setFont(totalAmountFont);
+            Cell totalAmountCell = totalRow.createCell(3); // column D: Amount
+            int dataEndRow = rowIdx; // last data row index (1-based in Excel is +1)
+            // In Excel rows are 1-based; header is row 1, data starts at row 2
+            String formula = String.format("SUM(D2:D%d)", dataEndRow);
+            totalAmountCell.setCellFormula(formula);
+            totalAmountCell.setCellStyle(totalAmountStyle);
+
+            // Autosize
+            for (int i = 0; i < 5; i++) sheet.autoSizeColumn(i);
+
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                wb.write(fos);
+            }
+            // Remember the chosen directory
+            try {
+                File parent = file.getParentFile();
+                if (parent != null) prefs.put(PREF_LAST_EXPORT_DIR, parent.getAbsolutePath());
+            } catch (Exception ignored) {}
+        } catch (IOException ex) {
+            new Alert(Alert.AlertType.ERROR, "Failed to export: " + ex.getMessage()).showAndWait();
         }
     }
 }

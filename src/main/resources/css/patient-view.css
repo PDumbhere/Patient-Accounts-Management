@@ -97,10 +97,12 @@
 .status-active {
     -fx-text-fill: #2e7d32;
     -fx-font-weight: bold;
+    -fx-font-size: 1.15em;
 }
 
 .status-inactive {
     -fx-text-fill: #757575;
+    -fx-font-size: 1.1em;
 }
 
 /* Toolbar styling */
@@ -150,4 +152,22 @@
 .warning-message {
     -fx-text-fill: #ffc107;
     -fx-font-weight: bold;
+}
+
+/* Detail grid readability (labels and values) */
+.detail-label {
+    -fx-font-size: 1.05em;
+    -fx-font-weight: 600;
+    -fx-text-fill: #2c3e50;
+}
+
+.detail-value {
+    -fx-font-size: 1.15em;
+    -fx-text-fill: #212529;
+}
+
+/* Tab headers slightly larger for readability */
+.tab-pane .tab-header-area .tab .tab-label {
+    -fx-font-size: 1.05em;
+    -fx-font-weight: 600;
 }

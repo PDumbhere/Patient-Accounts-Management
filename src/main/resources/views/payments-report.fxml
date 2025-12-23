@@ -22,6 +22,7 @@
                 <Label text="Payment Mode:"/>
                 <ComboBox fx:id="paymentModeCombo" prefWidth="160"/>
                 <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Export" onAction="#handleExport"/>
             </HBox>
             <Separator/>
         </VBox>
