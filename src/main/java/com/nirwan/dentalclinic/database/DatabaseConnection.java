@@ -9,6 +9,11 @@ public class DatabaseConnection {
     private static final String URL = "jdbc:mysql://localhost:3306/patient-accounts-db";
     private static final String USER = "patient-accounts-user";
     private static final String PASSWORD = "patient-accounts-user";
+    private static final String driver = "com.mysql.cj.jdbc.Driver";
+//private static final String URL = "jdbc:h2:file:C:/Nirwan/db/patient-accounts;DB_CLOSE_ON_EXIT=FALSE";
+//    private static final String USER = "sa";
+//    private static final String PASSWORD = "sa";
+//    private static final String driver = "org.h2.Driver";
     private static DatabaseConnection instance;
     private final BasicDataSource dataSource;
 
@@ -25,7 +30,7 @@ public class DatabaseConnection {
     public static void initializeDatabase() {
         try {
             // Load MySQL JDBC Driver
-            Class.forName("com.mysql.cj.jdbc.Driver");
+            Class.forName(driver);
             
             // Initialize the connection pool
             instance = new DatabaseConnection();
