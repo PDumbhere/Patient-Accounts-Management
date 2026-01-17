@@ -17,6 +17,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
@@ -247,6 +248,7 @@ public class PatientViewController implements Initializable {
         try {
             // Get the current stage
             Stage stage = (Stage) patientNameLabel.getScene().getWindow();
+            stage.getIcons().add(new Image(getClass().getResourceAsStream("/icons/icon.png")));
             
             // Get the main controller and its root
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/main-view.fxml"));

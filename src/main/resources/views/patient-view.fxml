@@ -22,8 +22,8 @@
     <center>
         <VBox spacing="10" style="-fx-padding: 15;">
             <HBox spacing="10" alignment="CENTER_LEFT">
-                <Label text="Patient ID:" style="-fx-font-weight: bold;"/>
-                <Label fx:id="patientIdLabel"/>
+                <Label text="Patient ID:" style="-fx-font-weight: bold;" visible="false"/>
+                <Label fx:id="patientIdLabel" visible="false"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Label text="Status:" style="-fx-font-weight: bold;"/>
                 <Label fx:id="patientStatusLabel" style="-fx-text-fill: #2e7d32; -fx-font-weight: bold;"/>

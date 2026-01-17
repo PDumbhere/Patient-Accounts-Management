@@ -5,6 +5,7 @@ import com.nirwan.dentalclinic.models.Patient;
 import com.nirwan.dentalclinic.models.PatientTreatmentDto;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleLongProperty;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import com.nirwan.dentalclinic.repository.PatientDao;
 import javafx.collections.FXCollections;
@@ -365,6 +366,9 @@ public class MainController {
             // Create the dialog Stage
             Stage dialogStage = new Stage();
             dialogStage.setTitle("Add New Patient");
+            dialogStage.getIcons().add(
+                    new Image(getClass().getResourceAsStream("/icons/icon.png"))
+            );
             dialogStage.initModality(Modality.WINDOW_MODAL);
             // Derive owner from an existing node to avoid null primaryStage
             Stage ownerStage = (Stage) patientTable.getScene().getWindow();
@@ -437,6 +441,9 @@ public class MainController {
                         }
                         stage.setTitle("Patient Details - " + patient.getName());
                         stage.sizeToScene();
+                        stage.getIcons().add(
+                                new Image(getClass().getResourceAsStream("/icons/icon.png"))
+                        );
                         stage.centerOnScreen();
                         return;
                     }
@@ -542,6 +549,9 @@ public class MainController {
             Stage stage = new Stage();
             stage.setTitle("Payments Report");
             stage.initModality(Modality.WINDOW_MODAL);
+            stage.getIcons().add(
+                    new Image(getClass().getResourceAsStream("/icons/icon.png"))
+            );
             Stage owner = getStage();
             if (owner != null) stage.initOwner(owner);
             stage.setScene(new Scene(root));

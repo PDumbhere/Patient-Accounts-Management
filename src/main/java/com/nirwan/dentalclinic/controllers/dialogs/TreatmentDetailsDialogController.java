@@ -3,6 +3,7 @@ package com.nirwan.dentalclinic.controllers.dialogs;
 import com.nirwan.dentalclinic.models.Payment;
 import com.nirwan.dentalclinic.models.Treatment;
 import com.nirwan.dentalclinic.models.TreatmentCost;
+import com.nirwan.dentalclinic.repository.PatientDao;
 import com.nirwan.dentalclinic.repository.TreatmentDao;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.event.ActionEvent;
@@ -11,8 +12,10 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.scene.layout.GridPane;
 import javafx.geometry.Insets;
@@ -59,6 +62,7 @@ public class TreatmentDetailsDialogController implements Initializable {
     @FXML private Button updateCostBtn;
     
     private final TreatmentDao treatmentDao = new TreatmentDao();
+    private final PatientDao patientDao = new PatientDao();
     private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
     
@@ -215,7 +219,9 @@ public class TreatmentDetailsDialogController implements Initializable {
         
         // Update header
         titleLabel.setText("Treatment #" + treatment.getTreatmentId());
-        subtitleLabel.setText("For: " + treatment.getPatientId()); // TODO: Replace with actual patient name
+        subtitleLabel.setText("For: " + patientDao
+                .findById((long)treatment.getPatientId()).orElseThrow(
+                        ()-> new RuntimeException("Patient not found")).getName());
         
         // Update treatment details
         treatmentIdLabel.setText(treatment.getTreatmentId());
@@ -336,6 +342,10 @@ public class TreatmentDetailsDialogController implements Initializable {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.initOwner(dialogPane.getScene() != null ? dialogPane.getScene().getWindow() : null);
         dialog.setTitle("Add Payment");
+        Stage dialogStage = (Stage) dialog.getDialogPane()
+                .getScene().getWindow();
+        dialogStage.getIcons().add(
+                new Image(getClass().getResourceAsStream("/icons/icon.png")));
 
         DialogPane pane = new DialogPane();
         pane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -429,7 +439,10 @@ public class TreatmentDetailsDialogController implements Initializable {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.initOwner(owner);
         dialog.setTitle("Treatment Details");
-        
+        Stage dialogStage = (Stage) dialog.getDialogPane()
+                .getScene().getWindow();
+        dialogStage.getIcons().add(
+                new Image(getClass().getResourceAsStream("/icons/icon.png")));
         // Set the dialog content
         dialog.setDialogPane(dialogPane);
         // Ensure it's large enough and resizable
@@ -507,6 +520,10 @@ public class TreatmentDetailsDialogController implements Initializable {
         dialog.setTitle("Edit Payment");
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initOwner(deletePaymentBtn.getScene().getWindow());
+        Stage dialogStage = (Stage) dialog.getDialogPane()
+                .getScene().getWindow();
+        dialogStage.getIcons().add(
+                new Image(getClass().getResourceAsStream("/icons/icon.png")));
 
         // Create form fields
         TextField amountField = new TextField(String.format("%.2f", payment.getAmount()));

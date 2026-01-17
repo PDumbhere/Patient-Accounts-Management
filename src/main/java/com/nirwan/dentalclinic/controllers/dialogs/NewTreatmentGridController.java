@@ -7,6 +7,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.Modality;
@@ -142,6 +143,9 @@ public class NewTreatmentGridController {
             Stage dialogStage = new Stage();
             dialogStage.setTitle("New Treatment");
             dialogStage.initModality(Modality.APPLICATION_MODAL);
+            dialogStage.getIcons().add(
+                    new Image(NewTreatmentGridController.class.getResourceAsStream("/icons/icon.png"))
+            );
             dialogStage.initStyle(StageStyle.DECORATED);
             dialogStage.setResizable(false);
 
