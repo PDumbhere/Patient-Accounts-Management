@@ -153,8 +153,8 @@ public class PatientViewController implements Initializable {
             boolean changed = controller.showAndWait(patientNameLabel.getScene().getWindow());
             if (changed) {
                 // Reload treatments and header totals after updates in dialog
-                loadTreatments();
                 loadPatientData();
+                loadTreatments();
             }
         } catch (IOException e) {
             e.printStackTrace();

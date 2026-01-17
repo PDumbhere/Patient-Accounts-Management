@@ -70,9 +70,12 @@
                     <HBox spacing="10" alignment="CENTER_RIGHT">
                         <Label text="Record New Payment" style="-fx-font-weight: bold;"/>
                         <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="addPaymentBtn" text="Add Payment" onAction="#handleAddPayment"
+                                style="-fx-background-color: #4caf50; -fx-text-fill: white;"/>
+                        <Button fx:id="editPaymentBtn" text="Edit Payment" onAction="#handleEditPayment" disable="true"
+                                styleClass="btn-edit"/>
                         <Button fx:id="deletePaymentBtn" text="Delete Payment" onAction="#handleDeletePayment" disable="true"
                                 style="-fx-background-color: #e53935; -fx-text-fill: white;"/>
-                        <Button fx:id="addPaymentBtn" text="+ Add Payment" onAction="#handleAddPayment" style="-fx-background-color: #4caf50; -fx-text-fill: white;"/>
                     </HBox>
                     
                     <TableView fx:id="paymentsTable" style="-fx-table-cell-border-color: transparent;">

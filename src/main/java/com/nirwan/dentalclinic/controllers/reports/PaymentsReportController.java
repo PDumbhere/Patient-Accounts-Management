@@ -85,7 +85,7 @@ public class PaymentsReportController {
             toDatePicker.setValue(today);
         }
 
-        paymentModeCombo.getItems().setAll("All", "CASH", "CARD", "UPI", "BANK_TRANSFER");
+        paymentModeCombo.getItems().setAll("All", "CASH", "UPI");
         paymentModeCombo.getSelectionModel().select("All");
         
         // toggle date pickers visibility state

@@ -23,6 +23,7 @@ public class Treatment {
     private double amountPending;
     private boolean isActive;
     private boolean isDeleted;
+    private LocalDateTime paymentDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String paymentMethod;

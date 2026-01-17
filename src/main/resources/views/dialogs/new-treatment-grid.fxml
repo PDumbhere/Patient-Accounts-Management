@@ -16,63 +16,95 @@
            GridPane.columnIndex="0" GridPane.rowIndex="0" 
            GridPane.columnSpan="2" GridPane.halignment="CENTER"/>
     
-    <!-- Description -->
-    <Label text="Treatment:"
+    <!-- Treatment 1 (Required) -->
+    <Label text="Treatment (Required):"
            GridPane.columnIndex="0" GridPane.rowIndex="1"
            GridPane.halignment="RIGHT"/>
-    <ComboBox fx:id="treatmentCombo"
-              GridPane.columnIndex="1" GridPane.rowIndex="1"
-              GridPane.hgrow="ALWAYS"/>
-    
+
+    <VBox GridPane.columnIndex="1" GridPane.rowIndex="1"
+          GridPane.hgrow="ALWAYS" spacing="5">
+
+        <HBox GridPane.hgrow="ALWAYS" spacing="5">
+            <ComboBox fx:id="treatment1Combo" style="-fx-margin: 5;">
+                <promptText>Select treatment</promptText>
+            </ComboBox>
+
+            <!-- Treatment 2 (Optional) -->
+            <ComboBox fx:id="treatment2Combo" style="-fx-margin: 5;">
+                <promptText>Select additional treatment</promptText>
+            </ComboBox>
+
+            <!-- Treatment 3 (Optional) -->
+
+            <ComboBox fx:id="treatment3Combo" style="-fx-margin: 5;">
+                <promptText>Select additional treatment</promptText>
+            </ComboBox>
+        </HBox>
+        <HBox GridPane.hgrow="ALWAYS" spacing="5">
+            <TextField fx:id="treatment1Text" style="-fx-margin: 5;" disable="true">
+                <promptText>Enter treatment name</promptText>
+            </TextField>
+            <TextField fx:id="treatment2Text" style="-fx-margin: 5;" disable="true">
+                <promptText>Enter treatment name</promptText>
+            </TextField>
+            <TextField fx:id="treatment3Text" style="-fx-margin: 5;" disable="true">
+                <promptText>Enter treatment name</promptText>
+            </TextField>
+        </HBox>
+    </VBox>
     <!-- Cost -->
     <Label text="Initial Cost:" 
-           GridPane.columnIndex="0" GridPane.rowIndex="2" 
+           GridPane.columnIndex="0" GridPane.rowIndex="4" 
            GridPane.halignment="RIGHT"/>
     <HBox spacing="5" 
-          GridPane.columnIndex="1" GridPane.rowIndex="2">
+          GridPane.columnIndex="1" GridPane.rowIndex="4">
         <Label text="₹" style="-fx-font-weight: bold; -fx-padding: 5 0 0 0;"/>
         <TextField fx:id="costField" style="-fx-pref-width: 120;"/>
+        <Label text="Date:"/>
+        <DatePicker fx:id="datePicker"/>
     </HBox>
-    
+
+    <!-- Date -->
+
     <!-- Initial Payment -->
     <Label text="Initial Payment:" 
-           GridPane.columnIndex="0" GridPane.rowIndex="3" 
+           GridPane.columnIndex="0" GridPane.rowIndex="5" 
            GridPane.halignment="RIGHT"/>
     <HBox spacing="5" 
-          GridPane.columnIndex="1" GridPane.rowIndex="3">
+          GridPane.columnIndex="1" GridPane.rowIndex="5">
         <Label text="₹" style="-fx-font-weight: bold; -fx-padding: 5 0 0 0;"/>
         <TextField fx:id="initialPaymentField" style="-fx-pref-width: 120;"/>
     </HBox>
     
     <!-- Payment Method -->
     <Label text="Payment Method:" 
-           GridPane.columnIndex="0" GridPane.rowIndex="4" 
+           GridPane.columnIndex="0" GridPane.rowIndex="6" 
            GridPane.halignment="RIGHT"/>
     <ComboBox fx:id="paymentMethodCombo" 
-              GridPane.columnIndex="1" GridPane.rowIndex="4" 
+              GridPane.columnIndex="1" GridPane.rowIndex="6" 
               GridPane.hgrow="ALWAYS"/>
     
     <!-- Notes -->
     <Label text="Notes:" 
-           GridPane.columnIndex="0" GridPane.rowIndex="5" 
+           GridPane.columnIndex="0" GridPane.rowIndex="7" 
            GridPane.halignment="RIGHT" GridPane.valignment="TOP"/>
     <TextArea fx:id="notesField" 
               wrapText="true" 
               prefRowCount="3"
-              GridPane.columnIndex="1" GridPane.rowIndex="5" 
+              GridPane.columnIndex="1" GridPane.rowIndex="7" 
               GridPane.hgrow="ALWAYS"/>
     
     <!-- Error Label -->
     <Label fx:id="errorLabel" 
            style="-fx-text-fill: #d32f2f; -fx-padding: 10 0 0 0;" 
-           GridPane.columnIndex="0" GridPane.rowIndex="6" 
+           GridPane.columnIndex="0" GridPane.rowIndex="8" 
            GridPane.columnSpan="2"/>
     
     <!-- Buttons -->
     <HBox spacing="10" 
           style="-fx-padding: 10 0 0 0;" 
           alignment="CENTER_RIGHT" 
-          GridPane.columnIndex="0" GridPane.rowIndex="7" 
+          GridPane.columnIndex="0" GridPane.rowIndex="9" 
           GridPane.columnSpan="2">
         <Button text="Cancel" onAction="#handleCancel" 
                 styleClass="btn-cancel"/>

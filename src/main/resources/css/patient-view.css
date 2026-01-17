@@ -171,3 +171,14 @@
     -fx-font-size: 1.05em;
     -fx-font-weight: 600;
 }
+
+.btn-edit {
+    -fx-background-color: #2196F3; /* Blue */
+    -fx-text-fill: white;
+    -fx-padding: 8 16;
+    -fx-background-radius: 4;
+}
+
+.btn-edit:hover {
+    -fx-background-color: #1976D2;
+}

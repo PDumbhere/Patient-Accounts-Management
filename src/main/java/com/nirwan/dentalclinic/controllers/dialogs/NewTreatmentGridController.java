@@ -14,16 +14,26 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Date;
 import java.util.Optional;
 
 public class NewTreatmentGridController {
-    @FXML private ComboBox<String> treatmentCombo;
+    @FXML private ComboBox<String> treatment1Combo;
+    @FXML private ComboBox<String> treatment2Combo;
+    @FXML private ComboBox<String> treatment3Combo;
     @FXML private TextField costField;
     @FXML private TextField initialPaymentField;
     @FXML private ComboBox<String> paymentMethodCombo;
     @FXML private TextArea notesField;
     @FXML private Label errorLabel;
-
+    @FXML private DatePicker datePicker;
+    @FXML private TextField treatment1Text;
+    @FXML private TextField treatment2Text;
+    @FXML private TextField treatment3Text;
+    
     private final TreatmentDao treatmentDao = new TreatmentDao();
     private Patient patient;
     private Treatment createdTreatment;
@@ -31,43 +41,95 @@ public class NewTreatmentGridController {
 
     @FXML
     public void initialize() {
-        // Build or populate treatment combo (if not injected by FXML, create and replace TextArea)
-        if (treatmentCombo == null) {
-            treatmentCombo = new ComboBox<>();
+        // Initialize treatment combos with the same items
+        initializeTreatmentCombo(treatment1Combo, true);
+        initializeTreatmentCombo(treatment2Combo, false);
+        initializeTreatmentCombo(treatment3Combo, false);
+
+        // Add listeners to prevent duplicate selections
+        setupTreatmentComboListeners();
+
+        datePicker.setValue(LocalDate.now());
+        // Payment methods
+        paymentMethodCombo.getItems().addAll("Cash", "UPI");
+        paymentMethodCombo.getSelectionModel().selectFirst();
+    }
+
+    private void setupTreatmentComboListeners() {
+        // Listener for treatment1Combo
+        treatment1Combo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                if (newVal.equals(treatment2Combo.getValue())) {
+                    treatment2Combo.setValue("");
+                }
+                if (newVal.equals(treatment3Combo.getValue())) {
+                    treatment3Combo.setValue("");
+                }
+                if("Other".equalsIgnoreCase(newVal))
+                    treatment1Text.setDisable(false);
+                else
+                    treatment1Text.setDisable(true);
+            }
+        });
+
+        // Listener for treatment2Combo
+        treatment2Combo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                if (newVal.equals(treatment1Combo.getValue())) {
+                    treatment1Combo.setValue("");
+                }
+                if (newVal.equals(treatment3Combo.getValue())) {
+                    treatment3Combo.setValue("");
+                }
+                if("Other".equalsIgnoreCase(newVal))
+                    treatment2Text.setDisable(false);
+                else
+                    treatment2Text.setDisable(true);
+            }
+        });
+
+        // Listener for treatment3Combo
+        treatment3Combo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.isEmpty()) {
+                if (newVal.equals(treatment1Combo.getValue())) {
+                    treatment1Combo.setValue("");
+                }
+                if (newVal.equals(treatment2Combo.getValue())) {
+                    treatment2Combo.setValue("");
+                }
+                if("Other".equalsIgnoreCase(newVal))
+                    treatment3Text.setDisable(false);
+                else
+                    treatment3Text.setDisable(true);
+            }
+        });
+    }
+
+    private void initializeTreatmentCombo(ComboBox<String> combo, boolean isRequired) {
+        if (combo == null) {
+            combo = new ComboBox<>();
         }
-        treatmentCombo.getItems().setAll(
+
+        combo.getItems().setAll(
                 "Consultation",
                 "Extraction",
-                "Root Canal Treatment",
+                "RCT",
                 "Implant",
                 "Ortho",
                 "Prostho",
                 "Cementation",
                 "Scaling",
-                "X-Ray"
+                "X-Ray",
+                "FMR",
+                "Bleaching",
+                "Other"
         );
-        treatmentCombo.setEditable(false);
-        if (treatmentCombo.getSelectionModel().isEmpty()) {
-            treatmentCombo.getSelectionModel().selectFirst();
+
+        combo.setEditable(false);
+
+        if (isRequired) {
+            combo.getSelectionModel().select(0); // Select first treatment for required field
         }
-
-//        // Replace TextArea only if it exists (runtime swap path)
-//        if (descriptionField != null && treatmentCombo.getParent() == null && descriptionField.getParent() instanceof GridPane grid) {
-//            int idx = grid.getChildren().indexOf(descriptionField);
-//            GridPane.setColumnIndex(treatmentCombo, 1);
-//            GridPane.setRowIndex(treatmentCombo, 1);
-//            GridPane.setHgrow(treatmentCombo, Priority.ALWAYS);
-//            if (idx >= 0) {
-//                grid.getChildren().set(idx, treatmentCombo);
-//            } else {
-//                grid.getChildren().remove(descriptionField);
-//                grid.add(treatmentCombo, 1, 1);
-//            }
-//        }
-
-        // Payment methods
-        paymentMethodCombo.getItems().addAll("Cash", "Credit Card", "Debit Card", "UPI", "Insurance");
-        paymentMethodCombo.getSelectionModel().selectFirst();
     }
 
     public static Optional<Treatment> showDialog(Patient patient) {
@@ -100,112 +162,141 @@ public class NewTreatmentGridController {
         }
     }
 
-    private void setDialogStage(Stage dialogStage) {
-        this.dialogStage = dialogStage;
-    }
-
-    public void setPatient(Patient patient) {
-        this.patient = patient;
-    }
-
-    public Treatment getCreatedTreatment() {
-        return createdTreatment;
-    }
-
     @FXML
     private void handleOk() {
-        createdTreatment = saveTreatment();
-        if (createdTreatment != null) {
-            dialogStage.close();
-        }
-    }
-
-    @FXML
-    private void handleCancel() {
-        createdTreatment = null;
-        dialogStage.close();
-    }
-
-    private boolean validateForm() {
-        StringBuilder errorMessage = new StringBuilder();
-        
-        if (treatmentCombo == null || treatmentCombo.getValue() == null || treatmentCombo.getValue().trim().isEmpty()) {
-            errorMessage.append("Treatment is required.\n");
-        }
-        
         try {
-            if (costField.getText() == null || costField.getText().trim().isEmpty()) {
-                errorMessage.append("Cost is required.\n");
-            } else {
-                double cost = Double.parseDouble(costField.getText());
-                if (cost <= 0) {
-                    errorMessage.append("Cost must be greater than 0.\n");
-                }
+            // Validate form
+            if (!validateForm()) {
+                return;
             }
-            
-            if (!initialPaymentField.getText().isEmpty()) {
-                double initialPayment = Double.parseDouble(initialPaymentField.getText());
-                if (initialPayment < 0) {
-                    errorMessage.append("Initial payment cannot be negative.\n");
-                }
+
+            // Get form values
+            String description = buildTreatmentDescription();
+            double cost = Double.parseDouble(costField.getText());
+            double initialPayment = initialPaymentField.getText().trim().isEmpty() ? 0 :
+                    Double.parseDouble(initialPaymentField.getText().trim());
+            String paymentMethod = paymentMethodCombo.getValue();
+            String notes = notesField.getText().trim();
+            LocalDate date = datePicker.getValue();
+
+            // Create new treatment
+            Treatment treatment = new Treatment();
+            treatment.setTreatmentName(description);
+            treatment.setTotalAmount(cost);
+            treatment.setAmountPaid(initialPayment);
+            treatment.setPaymentMethod(paymentMethod);
+            treatment.setNotes(notes);
+            treatment.setPatientId(patient.getId());
+            treatment.setPaymentDate(date.atTime(LocalTime.now()));
+            treatment.setActive(true);
+            treatment.setCreatedAt(LocalDateTime.now());
+            treatment.setUpdatedAt(LocalDateTime.now());
+
+            // Save to database
+            createdTreatment = treatmentDao.saveTreatment(treatment);
+
+            if (createdTreatment == null) {
+                errorLabel.setText("Failed to save treatment. Please try again.");
+                return;
             }
-            
-        } catch (NumberFormatException e) {
-            errorMessage.append("Please enter valid numbers for cost and payment fields.\n");
+
+            // Close the dialog
+            if (dialogStage != null) {
+                dialogStage.close();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            errorLabel.setText("Error saving treatment: " + e.getMessage());
         }
-        
-        if (paymentMethodCombo.getValue() == null || paymentMethodCombo.getValue().isEmpty()) {
-            errorMessage.append("Please select a payment method.\n");
-        }
-        
-        if (errorMessage.length() > 0) {
-            errorLabel.setText(errorMessage.toString());
-            errorLabel.setVisible(true);
+    }
+
+    
+    private boolean validateForm() {
+        // Validate first treatment is selected
+        if (treatment1Combo.getValue() == null || treatment1Combo.getValue().trim().isEmpty()) {
+            errorLabel.setText("Please select at least one treatment");
             return false;
         }
         
-        errorLabel.setVisible(false);
+        // Validate cost
+        if (costField.getText() == null || costField.getText().trim().isEmpty()) {
+            errorLabel.setText("Please enter a cost");
+            return false;
+        }
+        
+        try {
+            Double.parseDouble(costField.getText());
+        } catch (NumberFormatException e) {
+            errorLabel.setText("Please enter a valid cost");
+            return false;
+        }
+        
+        // Validate initial payment if provided
+        if (!initialPaymentField.getText().trim().isEmpty()) {
+            try {
+                Double.parseDouble(initialPaymentField.getText());
+            } catch (NumberFormatException e) {
+                errorLabel.setText("Please enter a valid initial payment");
+                return false;
+            }
+        }
+        
         return true;
     }
     
-    private Treatment saveTreatment() {
-        try {
-            // Validate form first
-            if (!validateForm()) {
-                return null;
+    private String buildTreatmentDescription() {
+        StringBuilder description = new StringBuilder();
+        
+        // Add first treatment (required)
+        if (treatment1Combo.getValue() != null && !treatment1Combo.getValue().trim().isEmpty()) {
+            if("Other".equalsIgnoreCase(treatment1Combo.getValue().trim())){
+                description.append(treatment1Text.getText().trim());
+            }else{
+                description.append(treatment1Combo.getValue().trim());
             }
-            
-            // Get form values
-            String description = treatmentCombo != null && treatmentCombo.getValue() != null
-                    ? treatmentCombo.getValue().trim()
-                    : "";
-            double cost = Double.parseDouble(costField.getText());
-            double initialPayment = initialPaymentField.getText().isEmpty() ? 0 : 
-                                 Double.parseDouble(initialPaymentField.getText());
-            String paymentMethod = paymentMethodCombo.getValue();
-            String notes = notesField.getText().trim();
-            
-            // Create new treatment
-            Treatment treatment = new Treatment(null, patient.getId(), description, cost);
-            treatment.setAmountPaid(initialPayment);
-            treatment.setAmountPending(cost - initialPayment);
-            treatment.setPaymentMethod(paymentMethod);
-            treatment.setNotes(notes);
-            
-            // Save treatment to database
-            Treatment savedTreatment = treatmentDao.saveTreatment(treatment);
-            
-            if (savedTreatment == null) {
-                errorLabel.setText("Failed to save treatment. Please try again.");
-                return null;
-            }
-            
-            return savedTreatment;
-            
-        } catch (Exception e) {
-            errorLabel.setText("Error saving treatment: " + e.getMessage());
-            e.printStackTrace();
-            return null;
         }
+        
+        // Add second treatment (optional)
+        if (treatment2Combo.getValue() != null && !treatment2Combo.getValue().trim().isEmpty()) {
+            if (description.length() > 0) description.append(" / ");
+            if("Other".equalsIgnoreCase(treatment2Combo.getValue().trim())){
+                description.append(treatment2Text.getText().trim());
+            }else{
+                description.append(treatment2Combo.getValue().trim());
+            }
+        }
+        
+        // Add third treatment (optional)
+        if (treatment3Combo.getValue() != null && !treatment3Combo.getValue().trim().isEmpty()) {
+            if (description.length() > 0) description.append(" / ");
+            if("Other".equalsIgnoreCase(treatment3Combo.getValue().trim())){
+                description.append(treatment3Text.getText().trim());
+            }else{
+                description.append(treatment3Combo.getValue().trim());
+            }
+        }
+        
+        return description.toString();
+    }
+    
+    @FXML
+    private void handleCancel() {
+        createdTreatment = null;
+        if (dialogStage != null) {
+            dialogStage.close();
+        }
+    }
+    
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+    }
+    
+    public void setDialogStage(Stage dialogStage) {
+        this.dialogStage = dialogStage;
+    }
+    
+    public Treatment getCreatedTreatment() {
+        return createdTreatment;
     }
 }

@@ -5,16 +5,23 @@ import com.nirwan.dentalclinic.models.Treatment;
 import com.nirwan.dentalclinic.models.TreatmentCost;
 import com.nirwan.dentalclinic.repository.TreatmentDao;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
+import javafx.stage.Modality;
 import javafx.stage.Window;
 import javafx.scene.layout.GridPane;
 import javafx.geometry.Insets;
 
 import java.net.URL;
 import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
@@ -48,6 +55,7 @@ public class TreatmentDetailsDialogController implements Initializable {
     @FXML private DialogPane dialogPane;
     @FXML private Button deletePaymentBtn;
     @FXML private Button addPaymentBtn;
+    @FXML private Button editPaymentBtn;
     @FXML private Button updateCostBtn;
     
     private final TreatmentDao treatmentDao = new TreatmentDao();
@@ -56,6 +64,7 @@ public class TreatmentDetailsDialogController implements Initializable {
     
     private Treatment treatment;
     private boolean dataChanged = false;
+    private Payment selectedPayment;
     
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -67,6 +76,10 @@ public class TreatmentDetailsDialogController implements Initializable {
                 if (deletePaymentBtn != null) {
                     deletePaymentBtn.setDisable(newSel == null);
                 }
+                if (editPaymentBtn != null) {
+                    editPaymentBtn.setDisable(newSel == null);
+                }
+                selectedPayment = newSel;
             });
         }
     }
@@ -193,7 +206,7 @@ public class TreatmentDetailsDialogController implements Initializable {
         Button closeButton = (Button) dialogPane.lookupButton(ButtonType.CLOSE);
         if (closeButton != null) {
             closeButton.setText("Close");
-            closeButton.setOnAction(event -> dialogPane.getScene().getWindow().hide());
+//            closeButton.setOnAction(event -> dialogPane.getScene().getWindow().hide());
         }
     }
     
@@ -341,15 +354,23 @@ public class TreatmentDetailsDialogController implements Initializable {
         }));
 
         ChoiceBox<String> methodChoice = new ChoiceBox<>();
-        methodChoice.getItems().addAll("CASH", "CARD", "UPI", "BANK_TRANSFER");
+        methodChoice.getItems().addAll("CASH", "UPI");
         methodChoice.getSelectionModel().select(treatment.getPaymentMethod() != null ? treatment.getPaymentMethod() : "CASH");
 
+        DatePicker datePicker = new DatePicker();
+        datePicker.setValue(LocalDate.now());
+        datePicker.setPromptText("Date");
+
+        HBox hbox = new HBox();
+        hbox.setSpacing(5);
+        hbox.getChildren().addAll(methodChoice,
+                new Label("Date:"), datePicker);
         TextArea notesArea = new TextArea();
         notesArea.setPromptText("Notes (optional)");
         notesArea.setPrefRowCount(3);
 
         grid.addRow(0, new Label("Amount:"), amountField);
-        grid.addRow(1, new Label("Method:"), methodChoice);
+        grid.addRow(1,new Label("Method:"), hbox);
         grid.addRow(2, new Label("Notes:"), notesArea);
 
         pane.setContent(grid);
@@ -368,6 +389,7 @@ public class TreatmentDetailsDialogController implements Initializable {
                 String method = methodChoice.getValue();
                 String notes = notesArea.getText() != null ? notesArea.getText().trim() : "";
 
+                LocalDateTime paymentDate = datePicker.getValue().atTime(LocalTime.now());
                 // Confirm if overpaying beyond pending
                 if (amount > treatment.getAmountPending()) {
                     Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
@@ -381,7 +403,8 @@ public class TreatmentDetailsDialogController implements Initializable {
                     }
                 }
 
-                boolean ok = treatmentDao.recordPayment(treatment, amount, method, notes);
+                boolean ok = treatmentDao.recordPayment(treatment, amount,
+                        method, notes, paymentDate);
                 if (ok) {
                     // Update local model and UI
                     treatment.recordPayment(amount);
@@ -468,5 +491,122 @@ public class TreatmentDetailsDialogController implements Initializable {
         } else {
             errorLabel.setText("Failed to delete payment. Please try again.");
         }
+    }
+
+    @FXML
+    private void handleEditPayment() {
+        if (selectedPayment != null) {
+            showEditPaymentDialog(selectedPayment);
+        }
+    }
+
+    private void showEditPaymentDialog(Payment payment) {
+        if (payment == null) return;
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Edit Payment");
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(deletePaymentBtn.getScene().getWindow());
+
+        // Create form fields
+        TextField amountField = new TextField(String.format("%.2f", payment.getAmount()));
+        DatePicker datePicker = new DatePicker();
+        datePicker.setValue(payment.getPaymentDate().toLocalDate());
+
+        ChoiceBox<String> methodChoice = new ChoiceBox<>();
+        methodChoice.getItems().addAll("CASH", "UPI");
+        methodChoice.setValue(payment.getPaymentMethod() != null ? payment.getPaymentMethod() : "CASH");
+
+        TextArea notesArea = new TextArea(payment.getNotes() != null ? payment.getNotes() : "");
+        notesArea.setPromptText("Notes (optional)");
+        notesArea.setPrefRowCount(3);
+
+        // Layout
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        grid.add(new Label("Amount:"), 0, 0);
+        grid.add(amountField, 1, 0);
+        HBox hbox = new HBox();
+        hbox.setSpacing(5);
+        hbox.getChildren().addAll(methodChoice,
+                new Label("Date:"), datePicker);
+        grid.add(new Label("Method:"), 0, 1);
+        grid.add(hbox, 1, 1);
+        grid.add(new Label("Notes:"), 0, 3);
+        grid.add(notesArea, 1, 3);
+
+        dialog.getDialogPane().setContent(grid);
+
+        // Add buttons
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        // Validate input
+        Node addButton = dialog.getDialogPane().lookupButton(ButtonType.OK);
+        addButton.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                Double.parseDouble(amountField.getText());
+            } catch (NumberFormatException e) {
+                event.consume();
+                showAlert("Invalid Amount", "Please enter a valid amount", Alert.AlertType.ERROR);
+            }
+        });
+
+        Optional<ButtonType> result = dialog.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                Payment updatedPayment = new Payment();
+                updatedPayment.setId(payment.getId());
+                updatedPayment.setTreatmentId(payment.getTreatmentId());
+                updatedPayment.setAmount(Double.parseDouble(amountField.getText()));
+                updatedPayment.setPaymentMethod(methodChoice.getValue());
+                updatedPayment.setNotes(notesArea.getText().trim());
+                updatedPayment.setPaymentDate(datePicker.getValue().atTime(
+                        LocalTime.now()));
+
+                if (treatmentDao.editPayment(payment, updatedPayment)) {
+                    // Prefer reading fresh values from DB so generated columns are consistent
+                    try {
+                        java.util.Optional<Treatment> fresh = treatmentDao.findById(treatment.getId());
+                        if (fresh.isPresent()) {
+                            Treatment t = fresh.get();
+                            treatment.setTotalAmount(t.getTotalAmount());
+                            treatment.setAmountPaid(t.getAmountPaid());
+                            treatment.setAmountPending(t.getAmountPending());
+                            treatment.setActive(t.isActive());
+                            treatment.setUpdatedAt(t.getUpdatedAt());
+                        } else {
+                            // Fallback: adjust locally
+                            double amt = updatedPayment.getAmount()-payment.getAmount();
+                            double newPaid = Math.max(0, treatment.getAmountPaid() +amt);
+                            treatment.setAmountPaid(newPaid);
+                            treatment.setAmountPending(Math.max(0, treatment.getTotalAmount() - newPaid));
+                            treatment.setUpdatedAt(java.time.LocalDateTime.now());
+                        }
+                    } catch (Exception ignored) {
+                        // If refresh fails, keep local fallback values
+                    }
+                    dataChanged = true;
+                    updateUI();
+                    loadPaymentHistory();
+                    loadCostHistory();
+                } else {
+                    showAlert("Error", "Failed to update payment", Alert.AlertType.ERROR);
+                }
+            } catch (NumberFormatException e) {
+                showAlert("Error", "Invalid amount format", Alert.AlertType.ERROR);
+            }
+        }
+    }
+
+    private void showAlert(String title, String message, Alert.AlertType type) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
