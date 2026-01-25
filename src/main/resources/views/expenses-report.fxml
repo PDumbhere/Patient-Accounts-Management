@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.nirwan.dentalclinic.controllers.reports.ExpensesReportController"
+            fx:id="borderPane"
+            style="-fx-padding: 10;">
+    <top>
+        <VBox spacing="8">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="Date Range:"/>
+                <ComboBox fx:id="datePresetCombo" prefWidth="180"/>
+                <Label fx:id="fromLabel" text="From:"/>
+                <DatePicker fx:id="fromDatePicker"/>
+                <Label fx:id="toLabel" text="To:"/>
+                <DatePicker fx:id="toDatePicker"/>
+                <Label text="Expense Type:"/>
+                <ComboBox fx:id="expenseTypeCombo" promptText="Filter by type"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Export" onAction="#handleExport"/>
+            </HBox>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Button fx:id="addExpense" text="Add Expense" onAction="#handleAddPayment"/>
+                <Button fx:id="editExpense" text="Edit Expense" disable="true" onAction="#handleEditPayment"/>
+                <Button fx:id="deleteExpense" text="delete Expense" disable="true" onAction="#handleDeletePayment"/>
+            </HBox>
+            <Separator/>
+        </VBox>
+    </top>
+
+    <center>
+        <TableView fx:id="expensesTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="paymentDate" text="Payment Date" prefWidth="140">
+                    <cellValueFactory><PropertyValueFactory property="paymentDate"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn fx:id="expenseType" text="Expense Type" prefWidth="180">
+                    <cellValueFactory><PropertyValueFactory property="expenseType"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn fx:id="product" text="Product" prefWidth="180">
+                    <cellValueFactory><PropertyValueFactory property="product"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn fx:id="nameTo" text="Name To" prefWidth="200">
+                    <cellValueFactory><PropertyValueFactory property="nameTo"/></cellValueFactory>
+                </TableColumn>
+                <TableColumn fx:id="amount" text="Amount" prefWidth="120">
+                    <cellValueFactory><PropertyValueFactory property="amount"/></cellValueFactory>
+                </TableColumn>
+            </columns>
+        </TableView>
+    </center>
+    <bottom>
+        <VBox spacing="6" style="-fx-padding: 10 0 0 0;">
+            <Label fx:id="errorLabel" styleClass="error" style="-fx-padding: 5 0 0 0;" wrapText="true"/>
+
+            <Separator/>
+            <HBox spacing="20" alignment="CENTER_LEFT">
+                <Label text="Total Expenditure:"/>
+                <Label fx:id="totalExpenditureLabel" style="-fx-font-weight: bold;"/>
+            </HBox>
+        </VBox>
+    </bottom>
+
+</BorderPane>

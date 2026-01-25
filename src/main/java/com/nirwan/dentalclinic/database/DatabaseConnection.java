@@ -149,6 +149,23 @@ public class DatabaseConnection {
                     stmt.execute(paymentTableSQL);
                 }
 
+                // Create Patient table
+                String expensesTableSQL = """
+                    CREATE TABLE IF NOT EXISTS Expenses (
+                        id INT PRIMARY KEY AUTO_INCREMENT,
+                        type varchar(100) not null,
+                        product VARCHAR(255) NOT NULL,
+                        name VARCHAR(255) not null,
+                        amount double not null,
+                        transaction_date date not null,
+                        is_deleted BOOLEAN DEFAULT FALSE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    )""";
+                try (var stmt = conn.createStatement()) {
+                    stmt.execute(expensesTableSQL);
+                }
+
                 // Create a simplified view that shows patient information with their treatments
                 String viewSql = "CREATE OR REPLACE VIEW PatientList AS " +
                         "SELECT " +

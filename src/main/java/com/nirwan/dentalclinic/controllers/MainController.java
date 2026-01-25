@@ -569,7 +569,37 @@ public class MainController {
             showError("Error", "Could not open Payments Report: " + ex.getMessage());
         }
     }
-    
+
+    @FXML
+    private void openExpenseReport() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/expenses-report.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = new Stage();
+            stage.setTitle("Expense Report");
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.getIcons().add(
+                    new Image(getClass().getResourceAsStream("/icons/icon.png"))
+            );
+            Stage owner = getStage();
+            if (owner != null) stage.initOwner(owner);
+            stage.setScene(new Scene(root));
+            stage.setResizable(true);
+            // Keep width same as main view and position near it
+            if (owner != null) {
+                double w = owner.getWidth();
+                if (w > 0) stage.setWidth(w);
+                // place slightly offset within screen bounds
+                stage.setX(owner.getX());
+                stage.setY(owner.getY() + 30);
+            }
+            stage.showAndWait();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            showError("Error", "Could not open Expenses Report: " + ex.getMessage());
+        }
+    }
     private void showInfo(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
