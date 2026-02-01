@@ -20,8 +20,19 @@ public class TreatmentDao {
     private static final String SELECT_TREATMENT_BY_ID = 
         "SELECT * FROM Treatment WHERE id = ? AND is_deleted = false";
     
-    private static final String SELECT_TREATMENTS_BY_PATIENT = 
-        "SELECT * FROM Treatment WHERE patient_id = ? AND is_deleted = false ORDER BY is_active DESC, created_at DESC";
+    private static final String SELECT_TREATMENTS_BY_PATIENT =
+            """
+                WITH latest_payment as(
+                    SELECT treatment_id, MAX(payment_date) as payment_date
+                    FROM Payment
+                    WHERE is_deleted = false
+                    GROUP BY treatment_id
+                )
+                SELECT t.*, p.payment_date FROM Treatment t 
+                Join latest_payment p ON t.treatment_id = p.treatment_id
+                WHERE t.patient_id = ? AND t.is_deleted = false 
+                ORDER BY t.is_active DESC, t.created_at DESC, p.payment_date DESC
+            """;
     
     // Note: amount_pending is a generated column in DB, do not set it explicitly
     private static final String UPDATE_TREATMENT_SQL = 
@@ -289,7 +300,9 @@ public class TreatmentDao {
                 (oldPayment.getPaymentMethod() == null ? newPayment.getPaymentMethod() == null :
                         oldPayment.getPaymentMethod().equals(newPayment.getPaymentMethod())) &&
                 (oldPayment.getNotes() == null ? newPayment.getNotes() == null :
-                        oldPayment.getNotes().equals(newPayment.getNotes()))) {
+                        oldPayment.getNotes().equals(newPayment.getNotes())) &&
+                (oldPayment.getPaymentDate() == null ? newPayment.getPaymentDate() == null :
+                        oldPayment.getPaymentDate().isEqual(newPayment.getPaymentDate()))) {
             // No changes to make
             return true;
         }
@@ -620,6 +633,7 @@ public class TreatmentDao {
         treatment.setDeleted(rs.getBoolean("is_deleted"));
         treatment.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         treatment.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
+        treatment.setPaymentDate(rs.getTimestamp("payment_date").toLocalDateTime());
         return treatment;
     }
 

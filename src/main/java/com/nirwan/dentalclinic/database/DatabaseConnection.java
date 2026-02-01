@@ -1,5 +1,6 @@
 package com.nirwan.dentalclinic.database;
 
+import com.nirwan.dentalclinic.utils.DatabaseInitializer;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -149,6 +150,23 @@ public class DatabaseConnection {
                     stmt.execute(paymentTableSQL);
                 }
 
+                // Create User table for authentication
+                String userTableSQL = "CREATE TABLE IF NOT EXISTS User (\n" +
+                        "    id INT PRIMARY KEY AUTO_INCREMENT,\n" +
+                        "    username VARCHAR(255) UNIQUE NOT NULL,\n" +
+                        "    password_hash VARCHAR(512) NOT NULL,\n" +
+                        "    full_name VARCHAR(255) NOT NULL,\n" +
+                        "    role VARCHAR(50) DEFAULT 'USER',\n" +
+                        "    last_login TIMESTAMP NULL,\n" +
+                        "    is_active BOOLEAN DEFAULT TRUE,\n" +
+                        "    is_deleted BOOLEAN DEFAULT FALSE,\n" +
+                        "    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n" +
+                        "    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n" +
+                        ")";
+                try (var stmt = conn.createStatement()) {
+                    stmt.execute(userTableSQL);
+                }
+
                 // Create Patient table
                 String expensesTableSQL = """
                     CREATE TABLE IF NOT EXISTS Expenses (
@@ -193,6 +211,11 @@ public class DatabaseConnection {
 
                 // If we get here, commit all changes
                 conn.commit();
+                
+                // Initialize default users after tables are created
+                DatabaseInitializer.createDefaultAdminUser();
+                DatabaseInitializer.createSampleUser();
+                
             } catch (SQLException e) {
                 // If there's an error, rollback the transaction
                 try {

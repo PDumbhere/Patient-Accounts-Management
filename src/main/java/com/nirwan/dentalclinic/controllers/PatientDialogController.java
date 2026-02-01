@@ -11,6 +11,7 @@ import javafx.scene.Node;
 import java.sql.SQLException;
 
 public class PatientDialogController {
+    @FXML private Label titleLabel;
     @FXML private TextField firstNameField;
     @FXML private TextField lastNameField;
 
@@ -18,6 +19,7 @@ public class PatientDialogController {
     private boolean saveClicked = false;
     private Patient patient;
     private PatientDao patientDao;
+    private boolean isEditMode = false;
 
     @FXML
     private void initialize() {
@@ -26,6 +28,28 @@ public class PatientDialogController {
 
     public void setDialogStage(Stage dialogStage) {
         this.dialogStage = dialogStage;
+    }
+    
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+        this.isEditMode = (patient != null && patient.getId() > 0);
+        
+        if (isEditMode) {
+            titleLabel.setText("Edit Patient");
+            // Split the name into first and last name
+            String[] nameParts = patient.getName().trim().split("\\s+", 2);
+            if (nameParts.length >= 2) {
+                firstNameField.setText(nameParts[0]);
+                lastNameField.setText(nameParts[1]);
+            } else if (nameParts.length == 1) {
+                firstNameField.setText(nameParts[0]);
+                lastNameField.setText("");
+            }
+        } else {
+            titleLabel.setText("Add New Patient");
+            firstNameField.clear();
+            lastNameField.clear();
+        }
     }
 
     public boolean isSaveClicked() {
@@ -44,19 +68,37 @@ public class PatientDialogController {
         }
         
         try {
-            patient = new Patient();
-            patient.setName(firstNameField.getText().trim()+" "+lastNameField.getText().trim());
+            String fullName = firstNameField.getText().trim() + " " + lastNameField.getText().trim();
             
-            // Save to database
-            patientDao = new PatientDao();
-            boolean saved = patientDao.savePatient(patient);
-            
-            if (saved) {
-                saveClicked = true;
-                dialogStage.close();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Patient saved successfully!");
+            if (isEditMode) {
+                // Update existing patient
+                patient.setName(fullName);
+                patientDao = new PatientDao();
+                boolean updated = patientDao.updatePatient(patient);
+                
+                if (updated) {
+                    saveClicked = true;
+                    dialogStage.close();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Patient updated successfully!");
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to update patient. Please try again.");
+                }
             } else {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to save patient. Please try again.");
+                // Create new patient
+                patient = new Patient();
+                patient.setName(fullName);
+                
+                // Save to database
+                patientDao = new PatientDao();
+                boolean saved = patientDao.savePatient(patient);
+                
+                if (saved) {
+                    saveClicked = true;
+                    dialogStage.close();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Patient saved successfully!");
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to save patient. Please try again.");
+                }
             }
         }  catch (Exception e) {
             e.printStackTrace();
@@ -107,6 +149,10 @@ public class PatientDialogController {
         alert.showAndWait();
     }
 
+    public Patient getPatient() {
+        return patient;
+    }
+    
     public String getFirstName() {
         return firstNameField.getText().trim();
     }

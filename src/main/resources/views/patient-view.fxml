@@ -14,6 +14,7 @@
         <ToolBar>
             <Button text="Back to List" onAction="#handleBackToList" />
             <Button text="Refresh" onAction="#handleRefresh" />
+            <Button text="Edit Patient" onAction="#handleEditPatient" style="-fx-background-color: #2196f3; -fx-text-fill: white;" />
             <Region HBox.hgrow="ALWAYS"/>
             <Label fx:id="patientNameLabel" styleClass="header-text" />
         </ToolBar>

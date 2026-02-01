@@ -1,6 +1,7 @@
 package com.nirwan.dentalclinic;
 
 import com.nirwan.dentalclinic.database.DatabaseConnection;
+import com.nirwan.dentalclinic.security.SessionManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -13,37 +14,17 @@ public class JavaFXApplication extends Application {
     @Override
     public void start(Stage stage) {
         try {
-            System.out.println("Loading FXML...");
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/main-view.fxml"));
-            Parent root = fxmlLoader.load();
+            // Load session from file to check if user is logged in today
+            SessionManager sessionManager = SessionManager.getInstance();
+            sessionManager.loadSessionFromFile();
             
-            // Get the controller and set the primary stage and main view root
-            com.nirwan.dentalclinic.controllers.MainController controller = fxmlLoader.getController();
-            controller.setPrimaryStage(stage);
-            controller.setMainViewRoot(root);
-            
-            System.out.println("FXML loaded and controller initialized successfully");
-
-            // Create scene
-            Scene scene = new Scene(root, 900, 600);
-            
-            // Apply CSS styles
-            String css = getClass().getResource("/styles/main.css").toExternalForm();
-            if (css != null) {
-                scene.getStylesheets().add(css);
-                System.out.println("CSS styles applied successfully");
+            // Check if user needs to login (not logged in or new day)
+            if (!sessionManager.isLoggedIn() || sessionManager.requiresNewLogin()) {
+                showLoginScreen(stage);
             } else {
-                System.err.println("Warning: Could not load CSS file");
+                showMainApplication(stage);
             }
             
-            stage.setTitle("Nirwan Dental Clinic - Account Management");
-            stage.getIcons().add(
-                    new Image(getClass().getResourceAsStream("/icons/icon.png"))
-            );
-            stage.setScene(scene);
-            stage.show();
-            System.out.println("Stage shown successfully");
-
         } catch (Exception e) {
             System.err.println("Error in JavaFX Application start method:");
             e.printStackTrace();
@@ -59,6 +40,81 @@ public class JavaFXApplication extends Application {
             System.exit(1);
         }
     }
+    
+    private void showLoginScreen(Stage stage) {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/login-view.fxml"));
+            Parent root = fxmlLoader.load();
+            
+            // Get the controller and set the primary stage
+            com.nirwan.dentalclinic.controllers.LoginController controller = fxmlLoader.getController();
+            controller.setPrimaryStage(stage);
+            
+            // Create scene
+            Scene scene = new Scene(root, 400, 500);
+            
+            // Apply login CSS styles
+            String loginCss = getClass().getResource("/styles/login.css").toExternalForm();
+            if (loginCss != null) {
+                scene.getStylesheets().add(loginCss);
+            }
+            
+            stage.setTitle("Nirwan Dental Clinic - Login");
+            stage.getIcons().add(
+                    new Image(getClass().getResourceAsStream("/icons/icon.png"))
+            );
+            stage.setScene(scene);
+            stage.setResizable(false);
+            stage.centerOnScreen();
+            stage.show();
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load login screen", e);
+        }
+    }
+    
+    private void showMainApplication(Stage stage) {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/views/main-view.fxml"));
+            Parent root = fxmlLoader.load();
+            
+            // Get the controller and set the primary stage and main view root
+            com.nirwan.dentalclinic.controllers.MainController controller = fxmlLoader.getController();
+            controller.setPrimaryStage(stage);
+            controller.setMainViewRoot(root);
+            
+            // Create scene
+            Scene scene = new Scene(root, 900, 600);
+            
+            // Apply CSS styles
+            String css = getClass().getResource("/styles/main.css").toExternalForm();
+            if (css != null) {
+                scene.getStylesheets().add(css);
+            }
+            
+            stage.setTitle("Nirwan Dental Clinic - Account Management");
+            stage.getIcons().add(
+                    new Image(getClass().getResourceAsStream("/icons/icon.png"))
+            );
+            stage.setScene(scene);
+            stage.show();
+            
+        } catch (Exception e) {
+            System.err.println("Error in JavaFX Application start method:");
+            e.printStackTrace();
+
+            // Show error dialog
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Application Error");
+            alert.setHeaderText("Failed to start application");
+            alert.setContentText("An error occurred while starting the application:\n" + e.getMessage());
+            alert.showAndWait();
+
+            // Exit the application
+            System.exit(1);
+        }
+    }
+    
     @Override
     public void stop() throws Exception {
         super.stop();

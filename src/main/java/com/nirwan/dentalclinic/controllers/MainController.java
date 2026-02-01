@@ -3,6 +3,7 @@ package com.nirwan.dentalclinic.controllers;
 import com.nirwan.dentalclinic.database.DatabaseConnection;
 import com.nirwan.dentalclinic.models.Patient;
 import com.nirwan.dentalclinic.models.PatientTreatmentDto;
+import com.nirwan.dentalclinic.security.SessionManager;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.scene.image.Image;
@@ -42,6 +43,8 @@ public class MainController {
     @FXML private Button btnAddPatient;
     @FXML private Button btnExportData;
     @FXML private TextField searchField;
+    @FXML private Label userLabel;
+    @FXML private Button logoutButton;
 
     private final ObservableList<PatientTreatmentDto> patientData = FXCollections.observableArrayList();
     private Stage primaryStage;
@@ -90,6 +93,17 @@ public class MainController {
         setupFiltering();
         loadPatientData();
         setupButtonActions();
+        setupUserInfo();
+    }
+    
+    private void setupUserInfo() {
+        SessionManager sessionManager = SessionManager.getInstance();
+        if (sessionManager.isLoggedIn()) {
+            var user = sessionManager.getCurrentUser();
+            if (user != null && userLabel != null) {
+                userLabel.setText("Welcome, " + user.getFullName() + " (" + user.getRole() + ")");
+            }
+        }
     }
 
     private void setupFiltering() {
@@ -598,6 +612,47 @@ public class MainController {
         } catch (IOException ex) {
             ex.printStackTrace();
             showError("Error", "Could not open Expenses Report: " + ex.getMessage());
+        }
+    }
+    
+    @FXML
+    private void handleLogout() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Logout");
+        alert.setHeaderText("Confirm Logout");
+        alert.setContentText("Are you sure you want to logout?");
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            // End session
+            SessionManager.getInstance().endSession();
+            
+            try {
+                // Load login screen
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/login-view.fxml"));
+                Parent root = loader.load();
+                
+                // Get controller and set stage
+                LoginController loginController = loader.getController();
+                loginController.setPrimaryStage(getStage());
+                
+                // Apply login CSS
+                Scene scene = getStage().getScene();
+                String loginCss = getClass().getResource("/styles/login.css").toExternalForm();
+                if (loginCss != null) {
+                    scene.getStylesheets().clear();
+                    scene.getStylesheets().add(loginCss);
+                }
+                
+                // Set login scene
+                scene.setRoot(root);
+                getStage().setTitle("Nirwan Dental Clinic - Login");
+                getStage().setResizable(false);
+                getStage().centerOnScreen();
+                
+            } catch (IOException e) {
+                showError("Error", "Could not load login screen: " + e.getMessage());
+            }
         }
     }
     private void showInfo(String title, String message) {

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nirwan.dentalclinic.controllers.LoginController"
+      styleClass="login-container"
+      alignment="CENTER"
+      spacing="20"
+      prefWidth="400"
+      prefHeight="500">
+
+    <padding>
+        <Insets top="40" right="40" bottom="40" left="40"/>
+    </padding>
+
+    <!-- Header -->
+    <VBox alignment="CENTER" spacing="10">
+        <Label text="Nirwan Dental Clinic" styleClass="app-title"/>
+        <Label text="Account Management System" styleClass="app-subtitle"/>
+    </VBox>
+
+    <!-- Login Form -->
+    <VBox styleClass="login-form" spacing="15" alignment="CENTER">
+        <padding>
+            <Insets top="30" right="30" bottom="30" left="30"/>
+        </padding>
+
+        <Label text="Please Login" styleClass="form-title"/>
+
+        <VBox spacing="10" styleClass="form-field">
+            <Label text="Username:"/>
+            <TextField fx:id="usernameField" 
+                      promptText="Enter your username"
+                      styleClass="text-input"/>
+        </VBox>
+
+        <VBox spacing="10" styleClass="form-field">
+            <Label text="Password:"/>
+            <PasswordField fx:id="passwordField" 
+                          promptText="Enter your password"
+                          styleClass="text-input"/>
+        </VBox>
+
+        <Button fx:id="loginButton" 
+                text="Login" 
+                styleClass="login-button"
+                onAction="#handleLogin"
+                prefWidth="200"/>
+
+        <Label fx:id="errorLabel" 
+               text="" 
+               styleClass="error-label"
+               wrapText="true"
+               textAlignment="CENTER"/>
+    </VBox>
+
+    <!-- Footer -->
+    <VBox alignment="CENTER" spacing="5">
+        <Label text="© 2024 Nirwan Dental Clinic" styleClass="footer-text"/>
+        <Label text="Secure Login Required Daily" styleClass="security-note"/>
+    </VBox>
+
+</VBox>

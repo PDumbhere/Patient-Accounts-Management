@@ -85,7 +85,7 @@ public class PatientViewController implements Initializable {
         treatmentIdCol.setCellValueFactory(new PropertyValueFactory<>("treatmentId"));
         descriptionCol.setCellValueFactory(new PropertyValueFactory<>("treatmentName"));
         dateCol.setCellValueFactory(cellData ->
-            new SimpleStringProperty(cellData.getValue().getCreatedAt().format(dateFormatter)));
+            new SimpleStringProperty(cellData.getValue().getPaymentDate().format(dateFormatter)));
         totalAmountCol.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         paidAmountCol.setCellValueFactory(new PropertyValueFactory<>("amountPaid"));
         pendingAmountCol.setCellValueFactory(new PropertyValueFactory<>("amountPending"));
@@ -231,8 +231,41 @@ public class PatientViewController implements Initializable {
     
     @FXML
     private void handleEditPatient() {
-        // TODO: Implement edit patient dialog
-        // showEditPatientDialog();
+        if (currentPatient == null) {
+            showAlert("Error", "No Patient Selected", "No patient data available to edit.", AlertType.ERROR);
+            return;
+        }
+
+        try {
+            // Load the patient dialog
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/patient-dialog.fxml"));
+            Parent root = loader.load();
+            
+            // Get the controller and set up for editing
+            PatientDialogController controller = loader.getController();
+            
+            // Create a new stage for the dialog
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Edit Patient");
+            dialogStage.setScene(new Scene(root));
+            dialogStage.setResizable(false);
+            
+            controller.setDialogStage(dialogStage);
+            controller.setPatient(currentPatient);
+            
+            // Show the dialog and wait for user response
+            dialogStage.showAndWait();
+            
+            // Check if the user clicked save and the patient was updated
+            if (controller.isSaveClicked()) {
+                // Refresh the patient data to show updated name
+                loadPatientData();
+                showAlert("Success", "Patient Updated", "Patient information has been updated successfully.", AlertType.INFORMATION);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            showError("Error", "Failed to load edit dialog: " + e.getMessage());
+        }
     }
     
     private void showError(String title, String message) {

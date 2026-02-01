@@ -127,6 +127,8 @@ public class ExpensesReportController {
                 "Surgery",
                 "Electric Bill",
                 "Instrument",
+                "Implant",
+                "Salary",
                 "Other"
         );
         expenseTypeCombo.setPromptText("Select Expense Type");
@@ -267,6 +269,8 @@ public class ExpensesReportController {
                 "Surgery",
                 "Electric Bill",
                 "Instrument",
+                "Implant",
+                "Salary",
                 "Other"
         );
         typeComboBox.setPromptText("Select Expense Type");

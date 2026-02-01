@@ -14,7 +14,7 @@
       spacing="10"
       style="-fx-padding: 20;">
     
-    <Label text="Add New Patient" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+    <Label fx:id="titleLabel" text="Add New Patient" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
     
     <GridPane vgap="10" hgap="10" GridPane.hgrow="ALWAYS">
         <padding>

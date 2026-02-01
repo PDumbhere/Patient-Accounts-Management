@@ -106,15 +106,18 @@ public class PatientDao {
     }
 
     // UPDATE a patient
-    public static void updatePatient(Patient patient) {
-        String query = "UPDATE Patient SET name = ?, age = ?, mobile = ?, gender = ? WHERE id = ?";
+    public boolean updatePatient(Patient patient) {
+        String query = "UPDATE patient SET name = ?, updated_at = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, patient.getName());
-            pstmt.setInt(5, patient.getId());
-            pstmt.executeUpdate();
+            pstmt.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+            pstmt.setInt(3, patient.getId());
+            int affectedRows = pstmt.executeUpdate();
+            return affectedRows > 0;
         } catch (SQLException e) {
             System.err.println("Error updating patient: " + e.getMessage());
+            return false;
         }
     }
 
