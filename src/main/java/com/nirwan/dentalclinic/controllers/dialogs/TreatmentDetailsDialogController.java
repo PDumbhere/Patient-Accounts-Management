@@ -63,7 +63,7 @@ public class TreatmentDetailsDialogController implements Initializable {
     
     private final TreatmentDao treatmentDao = new TreatmentDao();
     private final PatientDao patientDao = new PatientDao();
-    private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
+    private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
     
     private Treatment treatment;
@@ -111,7 +111,7 @@ public class TreatmentDetailsDialogController implements Initializable {
         costField.setPromptText("New total cost");
         costField.setText(String.format("%.2f", treatment.getTotalAmount()));
         costField.setTextFormatter(new TextFormatter<>(c -> {
-            if (c.getControlNewText().matches("^\\d*(\\.\\d{0,2})?$")) return c;
+            if (c.getControlNewText().matches("^\\d*(\\.\\d{0,2})?₹")) return c;
             return null;
         }));
 
@@ -359,7 +359,7 @@ public class TreatmentDetailsDialogController implements Initializable {
         amountField.setPromptText("Amount");
         amountField.setTextFormatter(new TextFormatter<>(c -> {
             // allow numbers and dot
-            if (c.getControlNewText().matches("^\\d*(\\.\\d{0,2})?$")) return c;
+            if (c.getControlNewText().matches("^\\d*(\\.\\d{0,2})?₹")) return c;
             return null;
         }));
 

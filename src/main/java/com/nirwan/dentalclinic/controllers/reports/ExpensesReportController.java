@@ -282,7 +282,7 @@ public class ExpensesReportController {
         amountField.setPromptText("Amount");
         amountField.setTextFormatter(new TextFormatter<>(c -> {
             // allow numbers and dot
-            if (c.getControlNewText().matches("^\\d*(\\.\\d{0,2})?$")) return c;
+            if (c.getControlNewText().matches("^\\d*(\\.\\d{0,2})?₹")) return c;
             return null;
         }));
 
@@ -388,7 +388,7 @@ public class ExpensesReportController {
         amountField.setPromptText("Amount");
         amountField.setTextFormatter(new TextFormatter<>(c -> {
             // allow numbers and dot
-            if (c.getControlNewText().matches("^\\d*(\\.\\d{0,2})?$")) return c;
+            if (c.getControlNewText().matches("^\\d*(\\.\\d{0,2})?₹")) return c;
             return null;
         }));
 

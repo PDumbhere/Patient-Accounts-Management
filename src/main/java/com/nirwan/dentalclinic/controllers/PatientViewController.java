@@ -54,7 +54,7 @@ public class PatientViewController implements Initializable {
     private final TreatmentDao treatmentDao = new TreatmentDao();
     private Patient currentPatient;
     private final ObservableList<Treatment> treatments = FXCollections.observableArrayList();
-    private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
+    private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
 
     @Override
