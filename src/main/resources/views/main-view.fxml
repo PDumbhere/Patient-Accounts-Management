@@ -2,16 +2,12 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
-<?import javafx.scene.control.cell.*?>
-<?import javafx.geometry.Insets?>
 
-<?import java.lang.String?>
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nirwan.dentalclinic.controllers.MainController"
             style="-fx-padding: 10;">
-    
+
     <top>
         <VBox spacing="10" styleClass="header">
             <Label text="Nirwan Dental Clinic - Account Management" styleClass="header-title" HBox.hgrow="ALWAYS"/>
@@ -28,7 +24,7 @@
             </HBox>
         </VBox>
     </top>
-    
+
     <center>
         <TableView fx:id="patientTable" styleClass="data-table">
             <columns>
@@ -36,24 +32,25 @@
                 <TableColumn text="ID" fx:id="colPatientId"/>
                 <!-- Patient Name -->
                 <TableColumn text="Patient Name" fx:id="colPatientName" prefWidth="150" />
-                
+
                 <!-- Treatment Date -->
-                <TableColumn text="Date" fx:id="colTreatmentDate" prefWidth="100" />
-                
+                <TableColumn text="Date" fx:id="colTreatmentDate" prefWidth="80" />
+
                 <!-- Description -->
-                <TableColumn text="Treatment" fx:id="colDescription" prefWidth="250" />
-                
+                <TableColumn text="Treatment" fx:id="colDescription" prefWidth="220" />
+
                 <!-- Amounts -->
                 <TableColumn text="Total (₹)" fx:id="colTotalAmount" prefWidth="100" />
                 <TableColumn text="Paid (₹)" fx:id="colAmountPaid" prefWidth="100" />
                 <TableColumn text="Pending (₹)" fx:id="colAmountPending" prefWidth="100" />
-                
+
                 <!-- Status -->
                 <TableColumn text="Status" fx:id="colStatus" prefWidth="100" />
+                <TableColumn text="Account Created" fx:id="colAccountCreated" prefWidth="80" />
             </columns>
         </TableView>
     </center>
-    
+
     <bottom>
         <HBox spacing="10" alignment="CENTER" style="-fx-padding: 10 0 0 0;">
             <Button text="Add Patient" fx:id="btnAddPatient" styleClass="action-button" />
@@ -61,5 +58,5 @@
             <Button text="Expenses Report" fx:id="btnExportData" onAction="#openExpenseReport" styleClass="action-button" />
         </HBox>
     </bottom>
-    
+
 </BorderPane>

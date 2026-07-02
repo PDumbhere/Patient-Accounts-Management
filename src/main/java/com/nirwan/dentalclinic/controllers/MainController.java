@@ -18,14 +18,11 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Modality;
-import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
@@ -40,6 +37,7 @@ public class MainController {
     @FXML private TableColumn<PatientTreatmentDto, Number> colAmountPending;
     @FXML private TableColumn<PatientTreatmentDto, String> colStatus;
     @FXML private TableColumn<PatientTreatmentDto, LocalDate> colTreatmentDate;
+    @FXML private TableColumn<PatientTreatmentDto, LocalDate> colAccountCreated;
     @FXML private Button btnAddPatient;
     @FXML private Button btnExportData;
     @FXML private TextField searchField;
@@ -59,7 +57,7 @@ public class MainController {
     public void setPrimaryStage(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
-    
+
     /**
      * Sets the main view root for navigation
      * @param root The root node of the main view
@@ -95,7 +93,7 @@ public class MainController {
         setupButtonActions();
         setupUserInfo();
     }
-    
+
     private void setupUserInfo() {
         SessionManager sessionManager = SessionManager.getInstance();
         if (sessionManager.isLoggedIn()) {
@@ -135,7 +133,7 @@ public class MainController {
         colTreatmentDate.setCellValueFactory(cellData -> cellData.getValue().treatmentDateProperty());
         colTreatmentDate.setCellFactory(column -> new TableCell<>() {
             private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            
+
             @Override
             protected void updateItem(LocalDate date, boolean empty) {
                 super.updateItem(date, empty);
@@ -146,10 +144,23 @@ public class MainController {
                 }
             }
         });
-        
+        colAccountCreated.setCellValueFactory(cellData -> cellData.getValue().accountCreatedProperty());
+        colAccountCreated.setCellFactory(column -> new TableCell<>(){
+            private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            @Override
+            protected void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                if (empty || date == null) {
+                    setText("");
+                } else {
+                    setText(formatter.format(date));
+                }
+            }
+        });
+
         // Description column
         colDescription.setCellValueFactory(cellData -> cellData.getValue().descriptionProperty());
-        
+
         // Amount columns with currency formatting
         colTotalAmount.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getTotalAmount()));
         colTotalAmount.setCellFactory(column -> new TableCell<>() {
@@ -195,7 +206,7 @@ public class MainController {
                 }
             }
         });
-        
+
         // Status column with color coding
         colStatus.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
         colStatus.setCellFactory(column -> new TableCell<>() {
@@ -223,7 +234,7 @@ public class MainController {
                 }
             }
         });
-        
+
         // Numeric columns with currency formatting
         colTotalAmount.setCellValueFactory(cellData -> cellData.getValue().totalAmountProperty());
         colTotalAmount.setCellFactory(column -> new TableCell<>() {
@@ -233,7 +244,7 @@ public class MainController {
                 setText(empty || item == null ? "" : String.format("₹%.2f", item.doubleValue()));
             }
         });
-        
+
         colAmountPaid.setCellValueFactory(cellData -> cellData.getValue().amountPaidProperty());
         colAmountPaid.setCellFactory(column -> new TableCell<>() {
             @Override
@@ -242,7 +253,7 @@ public class MainController {
                 setText(empty || item == null ? "" : String.format("₹%.2f", item.doubleValue()));
             }
         });
-        
+
         colAmountPending.setCellValueFactory(cellData -> cellData.getValue().amountPendingProperty());
         colAmountPending.setCellFactory(column -> new TableCell<>() {
             @Override
@@ -262,7 +273,7 @@ public class MainController {
                 }
             }
         });
-        
+
         // Status column with color coding
         colStatus.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
         colStatus.setCellFactory(column -> new TableCell<>() {
@@ -326,10 +337,11 @@ public class MainController {
                    t.amount_paid,
                    t.amount_pending,
                    t.status,
-                   COALESCE(t.last_payment_date, t.treatment_updated) as treatment_date
+                   COALESCE(t.last_payment_date, t.treatment_updated) as treatment_date,
+                   p.updated_at
             FROM Patient p
             LEFT JOIN LatestTreatmentWithDate t ON p.id = t.patient_id
-            ORDER BY p.name
+            ORDER BY p.updated_at desc
             """;
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -346,13 +358,17 @@ public class MainController {
                 dto.amountPaidProperty().set(rs.getDouble("amount_paid"));
                 dto.amountPendingProperty().set(rs.getDouble("amount_pending"));
                 dto.statusProperty().set(rs.getString("status"));
-                
+
                 // Convert SQL date to LocalDate
                 java.sql.Timestamp timestamp = rs.getTimestamp("treatment_date");
                 if (timestamp != null) {
                     dto.treatmentDateProperty().set(timestamp.toLocalDateTime().toLocalDate());
                 }
-                
+                java.sql.Timestamp updatedAt = rs.getTimestamp("updated_at");
+                if (updatedAt != null) {
+                    dto.accountCreatedProperty().set(updatedAt.toLocalDateTime().toLocalDate());
+                }
+
                 patientData.add(dto);
             }
             // Items already set to sorted list; just refresh backing list
@@ -376,7 +392,7 @@ public class MainController {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(getClass().getResource("/views/patient-dialog.fxml"));
             Parent root = loader.load();
-            
+
             // Create the dialog Stage
             Stage dialogStage = new Stage();
             dialogStage.setTitle("Add New Patient");
@@ -388,29 +404,32 @@ public class MainController {
             Stage ownerStage = (Stage) patientTable.getScene().getWindow();
             dialogStage.initOwner(ownerStage);
             dialogStage.setScene(new Scene(root));
-            
+
             // Set the dialog stage in the controller
             PatientDialogController controller = loader.getController();
             controller.setDialogStage(dialogStage);
-            
+
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
-            
+
             // Refresh the patient list if a patient was added
             if (controller.isSaveClicked()) {
                 loadPatientData();
+                PatientTreatmentDto ptd = new PatientTreatmentDto();
+                ptd.setPatientId(controller.getPatientId());
+                openPatientView(ptd);
             }
         } catch (IOException e) {
             e.printStackTrace();
             showError("Error", "Could not load the dialog: " + e.getMessage());
         }
     }
-    
+
     private void setupButtonActions() {
         if (btnAddPatient != null) {
             btnAddPatient.setOnAction(event -> showAddPatientDialog());
         }
-        
+
         // Add double-click handler to the patient table
         patientTable.setRowFactory(tv -> {
             TableRow<PatientTreatmentDto> row = new TableRow<>();
@@ -423,17 +442,17 @@ public class MainController {
             return row;
         });
     }
-    
+
     private void openPatientView(PatientTreatmentDto patientDto) {
         try {
             // Load the patient view FXML
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(getClass().getResource("/views/patient-view.fxml"));
             Parent root = loader.load();
-            
+
             // Get the controller and set the patient
             PatientViewController controller = loader.getController();
-            
+
             // Fetch the complete patient data using patient ID
             try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
                 PatientDao patientDao = new PatientDao();
@@ -443,7 +462,7 @@ public class MainController {
                     if (patientOpt.isPresent()) {
                         Patient patient = patientOpt.get();
                         controller.setPatient(patient);
-                        
+
                         // Derive the stage from an existing control instead of relying on primaryStage
                         Stage stage = (Stage) patientTable.getScene().getWindow();
                         Scene currentScene = stage.getScene();
@@ -470,7 +489,7 @@ public class MainController {
             showError("Error", "Could not load patient view: " + e.getMessage());
         }
     }
-    
+
     private String getPatientIdByTreatmentId(Connection conn, String treatmentId) throws SQLException {
         String sql = "SELECT patient_id FROM treatment WHERE treatment_id = ? AND is_deleted = false";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -483,67 +502,67 @@ public class MainController {
         }
         return null;
     }
-    
+
     private void showAddTreatmentDialog() {
         PatientTreatmentDto selected = patientTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showError("No Selection", "Please select a patient first.");
             return;
         }
-        
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/treatment-dialog.fxml"));
             Parent root = loader.load();
-            
+
             // Get the controller and set the patient ID
 //            TreatmentDialogController controller = loader.getController();
             // You'll need to implement setPatientId in the TreatmentDialogController
             // controller.setPatientId(selected.getPatientId());
-            
+
             // Show the dialog
             Stage stage = new Stage();
             stage.setTitle("Add New Treatment");
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.setResizable(false);
-            
+
             // Refresh data after dialog is closed
             stage.setOnHidden(e -> loadPatientData());
             stage.showAndWait();
-            
+
         } catch (IOException e) {
             showError("Error", "Could not load the treatment dialog: " + e.getMessage());
         }
     }
-    
+
     private void showRecordPaymentDialog() {
         PatientTreatmentDto selected = patientTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showError("No Selection", "Please select a treatment to record payment for.");
             return;
         }
-        
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/payment-dialog.fxml"));
             Parent root = loader.load();
-            
+
             // Get the controller and set the treatment ID and amount due
 //            PaymentDialogController controller = loader.getController();
             // You'll need to implement these methods in the PaymentDialogController
             // controller.setTreatmentId(selected.getTreatmentId());
             // controller.setAmountDue(selected.getAmountPending());
-            
+
             // Show the dialog
             Stage stage = new Stage();
             stage.setTitle("Record Payment");
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(new Scene(root));
             stage.setResizable(false);
-            
+
             // Refresh data after dialog is closed
             stage.setOnHidden(e -> loadPatientData());
             stage.showAndWait();
-            
+
         } catch (IOException e) {
             showError("Error", "Could not load the payment dialog: " + e.getMessage());
         }
@@ -553,7 +572,7 @@ public class MainController {
         // TODO: Implement Excel export functionality
         showInfo("Export to Excel", "Export to Excel functionality will be implemented here.");
     }
-    
+
     @FXML
     private void openPaymentsReport() {
         try {
@@ -614,28 +633,28 @@ public class MainController {
             showError("Error", "Could not open Expenses Report: " + ex.getMessage());
         }
     }
-    
+
     @FXML
     private void handleLogout() {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Logout");
         alert.setHeaderText("Confirm Logout");
         alert.setContentText("Are you sure you want to logout?");
-        
+
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             // End session
             SessionManager.getInstance().endSession();
-            
+
             try {
                 // Load login screen
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/login-view.fxml"));
                 Parent root = loader.load();
-                
+
                 // Get controller and set stage
                 LoginController loginController = loader.getController();
                 loginController.setPrimaryStage(getStage());
-                
+
                 // Apply login CSS
                 Scene scene = getStage().getScene();
                 String loginCss = getClass().getResource("/styles/login.css").toExternalForm();
@@ -643,13 +662,13 @@ public class MainController {
                     scene.getStylesheets().clear();
                     scene.getStylesheets().add(loginCss);
                 }
-                
+
                 // Set login scene
                 scene.setRoot(root);
                 getStage().setTitle("Nirwan Dental Clinic - Login");
                 getStage().setResizable(false);
                 getStage().centerOnScreen();
-                
+
             } catch (IOException e) {
                 showError("Error", "Could not load login screen: " + e.getMessage());
             }

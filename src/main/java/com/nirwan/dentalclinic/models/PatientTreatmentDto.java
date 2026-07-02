@@ -13,6 +13,7 @@ public class PatientTreatmentDto {
     private final DoubleProperty amountPending = new SimpleDoubleProperty();
     private final StringProperty status = new SimpleStringProperty();
     private final ObjectProperty<LocalDate> treatmentDate = new SimpleObjectProperty<>();
+    private final ObjectProperty<LocalDate> accountCreated = new SimpleObjectProperty<>();
 
     // Property getters for JavaFX binding
     public LongProperty patientIdProperty() { return patientId; }
@@ -24,6 +25,7 @@ public class PatientTreatmentDto {
     public DoubleProperty amountPendingProperty() { return amountPending; }
     public StringProperty statusProperty() { return status; }
     public ObjectProperty<LocalDate> treatmentDateProperty() { return treatmentDate; }
+    public ObjectProperty<LocalDate> accountCreatedProperty() { return accountCreated; }
 
     // Regular getters
     public Long getPatientId() { return patientId.get(); }
@@ -35,4 +37,9 @@ public class PatientTreatmentDto {
     public double getAmountPending() { return amountPending.get(); }
     public String getStatus() { return status.get(); }
     public LocalDate getTreatmentDate() { return treatmentDate.get(); }
+    public LocalDate getAccountCreated() { return accountCreated.get(); }
+
+    public void setPatientId(int patientId){
+        this.patientId.set(patientId);
+    }
 }
