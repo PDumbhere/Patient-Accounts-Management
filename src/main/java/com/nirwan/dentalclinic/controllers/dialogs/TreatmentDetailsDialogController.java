@@ -60,16 +60,16 @@ public class TreatmentDetailsDialogController implements Initializable {
     @FXML private Button addPaymentBtn;
     @FXML private Button editPaymentBtn;
     @FXML private Button updateCostBtn;
-    
+
     private final TreatmentDao treatmentDao = new TreatmentDao();
     private final PatientDao patientDao = new PatientDao();
     private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
-    
+
     private Treatment treatment;
     private boolean dataChanged = false;
     private Payment selectedPayment;
-    
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         setupTableColumns();
@@ -154,12 +154,12 @@ public class TreatmentDetailsDialogController implements Initializable {
             }
         }
     }
-    
+
     public void setTreatment(Treatment treatment) {
         this.treatment = treatment;
         updateUI();
     }
-    
+
     private void setupTableColumns() {
         // Payment table columns
         paymentDateCol.setCellValueFactory(cd -> new ReadOnlyStringWrapper(
@@ -168,7 +168,7 @@ public class TreatmentDetailsDialogController implements Initializable {
         amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
         methodCol.setCellValueFactory(new PropertyValueFactory<>("paymentMethod"));
         notesCol.setCellValueFactory(new PropertyValueFactory<>("notes"));
-        
+
         // Format amount column
         amountCol.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -183,7 +183,7 @@ public class TreatmentDetailsDialogController implements Initializable {
                 }
             }
         });
-        
+
         // Cost history table columns
         effectiveDateCol.setCellValueFactory(cd -> new ReadOnlyStringWrapper(
                 cd.getValue().getEffectiveFrom() != null ? dateFormatter.format(cd.getValue().getEffectiveFrom()) : ""
@@ -191,7 +191,7 @@ public class TreatmentDetailsDialogController implements Initializable {
         costCol.setCellValueFactory(new PropertyValueFactory<>("cost"));
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         costNotesCol.setCellValueFactory(new PropertyValueFactory<>("notes"));
-        
+
         // Format cost column
         costCol.setCellFactory(tc -> new TableCell<>() {
             @Override
@@ -201,7 +201,7 @@ public class TreatmentDetailsDialogController implements Initializable {
             }
         });
     }
-    
+
     private void setupDialogButtons() {
         // Ensure there is a Close button even if FXML didn't define any
         if (!dialogPane.getButtonTypes().contains(ButtonType.CLOSE)) {
@@ -213,16 +213,16 @@ public class TreatmentDetailsDialogController implements Initializable {
 //            closeButton.setOnAction(event -> dialogPane.getScene().getWindow().hide());
         }
     }
-    
+
     private void updateUI() {
         if (treatment == null) return;
-        
+
         // Update header
         titleLabel.setText("Treatment #" + treatment.getTreatmentId());
         subtitleLabel.setText("For: " + patientDao
                 .findById((long)treatment.getPatientId()).orElseThrow(
                         ()-> new RuntimeException("Patient not found")).getName());
-        
+
         // Update treatment details
         treatmentIdLabel.setText(treatment.getTreatmentId());
         boolean isActive = treatment.isActive();
@@ -246,23 +246,23 @@ public class TreatmentDetailsDialogController implements Initializable {
         if (addPaymentBtn != null) addPaymentBtn.setDisable(!editEnabled);
         if (deletePaymentBtn != null) deletePaymentBtn.setDisable(!editEnabled || paymentsTable.getSelectionModel().getSelectedItem() == null);
         if (updateCostBtn != null) updateCostBtn.setDisable(!editEnabled);
-        
+
         descriptionArea.setText(treatment.getTreatmentName());
         dateCreatedLabel.setText(treatment.getCreatedAt().format(dateFormatter));
         lastUpdatedLabel.setText(treatment.getUpdatedAt().format(dateFormatter));
-        
+
         // Update financial information
         totalCostLabel.setText(currencyFormat.format(treatment.getTotalAmount()));
         amountPaidLabel.setText(currencyFormat.format(treatment.getAmountPaid()));
         amountPendingLabel.setText(currencyFormat.format(treatment.getAmountPending()));
-        
+
         // Load payment history
         loadPaymentHistory();
-        
+
         // Load cost history
         loadCostHistory();
     }
-    
+
     private void loadPaymentHistory() {
         if (treatment == null) return;
         try {
@@ -275,7 +275,7 @@ public class TreatmentDetailsDialogController implements Initializable {
             errorLabel.setText("Failed to load payments: " + ex.getMessage());
         }
     }
-    
+
     private void loadCostHistory() {
         if (treatment == null) return;
         try {
@@ -285,7 +285,7 @@ public class TreatmentDetailsDialogController implements Initializable {
             errorLabel.setText("Failed to load cost history: " + ex.getMessage());
         }
     }
-    
+
     @FXML
     private void handleMarkCompleted() {
         if (treatment == null || !treatment.isActive()) return;
@@ -331,7 +331,7 @@ public class TreatmentDetailsDialogController implements Initializable {
             errorLabel.setText("Failed to reopen treatment. Please try again.");
         }
     }
-    
+
     @FXML
     private void handleAddPayment() {
         if (treatment == null || !treatment.isActive()) {
@@ -359,7 +359,7 @@ public class TreatmentDetailsDialogController implements Initializable {
         amountField.setPromptText("Amount");
         amountField.setTextFormatter(new TextFormatter<>(c -> {
             // allow numbers and dot
-            if (c.getControlNewText().matches("^\\d*(\\.\\d{0,2})?₹")) return c;
+            if (c.getControlNewText().matches("^\\d*(\\.\\d{0,2})?$")) return c;
             return null;
         }));
 
@@ -434,7 +434,7 @@ public class TreatmentDetailsDialogController implements Initializable {
             }
         }
     }
-    
+
     public boolean showAndWait(Window owner) {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.initOwner(owner);
@@ -449,10 +449,10 @@ public class TreatmentDetailsDialogController implements Initializable {
         dialog.setResizable(true);
         dialogPane.setPrefWidth(800);
         dialogPane.setPrefHeight(600);
-        
+
         // Show the dialog and wait for response
         dialog.showAndWait();
-        
+
         return dataChanged;
     }
 
