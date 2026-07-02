@@ -2,13 +2,10 @@ package com.nirwan.dentalclinic.controllers;
 
 import com.nirwan.dentalclinic.models.Patient;
 import com.nirwan.dentalclinic.repository.PatientDao;
-import javafx.event.ActionEvent;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
-import javafx.scene.Node;
-
-import java.sql.SQLException;
 
 public class PatientDialogController {
     @FXML private Label titleLabel;
@@ -29,11 +26,11 @@ public class PatientDialogController {
     public void setDialogStage(Stage dialogStage) {
         this.dialogStage = dialogStage;
     }
-    
+
     public void setPatient(Patient patient) {
         this.patient = patient;
         this.isEditMode = (patient != null && patient.getId() > 0);
-        
+
         if (isEditMode) {
             titleLabel.setText("Edit Patient");
             // Split the name into first and last name
@@ -55,7 +52,11 @@ public class PatientDialogController {
     public boolean isSaveClicked() {
         return saveClicked;
     }
-    
+
+    public int getPatientId(){
+        return patient.getId();
+    }
+
     @FXML
     private void handleCancel() {
         dialogStage.close();
@@ -66,16 +67,16 @@ public class PatientDialogController {
         if (!isInputValid()) {
             return;
         }
-        
+
         try {
             String fullName = firstNameField.getText().trim() + " " + lastNameField.getText().trim();
-            
+
             if (isEditMode) {
                 // Update existing patient
                 patient.setName(fullName);
                 patientDao = new PatientDao();
                 boolean updated = patientDao.updatePatient(patient);
-                
+
                 if (updated) {
                     saveClicked = true;
                     dialogStage.close();
@@ -87,12 +88,12 @@ public class PatientDialogController {
                 // Create new patient
                 patient = new Patient();
                 patient.setName(fullName);
-                
+
                 // Save to database
                 patientDao = new PatientDao();
-                boolean saved = patientDao.savePatient(patient);
-                
-                if (saved) {
+                int patientId = patientDao.savePatient(patient);
+
+                if (patientId >0 ) {
                     saveClicked = true;
                     dialogStage.close();
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Patient saved successfully!");
@@ -106,9 +107,9 @@ public class PatientDialogController {
             return;
         }
     }
-    
+
     // Removed getFullName() as we're using separate first/last name fields
-    
+
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
@@ -135,9 +136,9 @@ public class PatientDialogController {
             return false;
         }
     }
-    
 
-    
+
+
     private void showAlert(Alert.AlertType type, String title, String header, String content) {
         Alert alert = new Alert(type);
         alert.initOwner(dialogStage);
@@ -152,7 +153,7 @@ public class PatientDialogController {
     public Patient getPatient() {
         return patient;
     }
-    
+
     public String getFirstName() {
         return firstNameField.getText().trim();
     }

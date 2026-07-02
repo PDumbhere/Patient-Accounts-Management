@@ -9,37 +9,37 @@ import java.util.List;
 import java.util.Optional;
 
 public class PatientDao {
-    private static final String INSERT_SQL = 
+    private static final String INSERT_SQL =
         "INSERT INTO patient (name, is_deleted, created_at, updated_at) " +
         "VALUES (?, ?, ?, ?)";
     private static final String SELECT_ALL_SQL = "SELECT * FROM patient WHERE is_deleted = false";
     private static final String SELECT_BY_ID_SQL = "SELECT * FROM patient WHERE id = ? AND is_deleted = false";
 
     // CREATE a new patient
-    public boolean savePatient(Patient patient) {
+    public int savePatient(Patient patient) {
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             conn.setAutoCommit(false);
-            
+
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, patient.getName());
                 stmt.setBoolean(2, false); // is_deleted
                 LocalDateTime now = LocalDateTime.now();
                 stmt.setTimestamp(3, Timestamp.valueOf(now));
                 stmt.setTimestamp(4, Timestamp.valueOf(now));
-                
+
                 int affectedRows = stmt.executeUpdate();
-                
+
                 if (affectedRows > 0) {
                     try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             patient.setId(generatedKeys.getInt(1));
                             conn.commit();
-                            return true;
+                            return patient.getId();
                         }
                     }
                 }
                 conn.rollback();
-                return false;
+                return -1;
             } catch (SQLException e) {
                 try {
                     conn.rollback();
@@ -56,7 +56,7 @@ public class PatientDao {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
+            return -1;
         }
     }
 
@@ -64,7 +64,7 @@ public class PatientDao {
     public Optional<Patient> findById(Long id) {
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(SELECT_BY_ID_SQL)) {
-            
+
             stmt.setLong(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -89,7 +89,7 @@ public class PatientDao {
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(SELECT_ALL_SQL);
              ResultSet rs = stmt.executeQuery()) {
-            
+
             while (rs.next()) {
                 Patient patient = new Patient();
                 patient.setId(rs.getInt("id"));
@@ -133,4 +133,3 @@ public class PatientDao {
         }
     }
 }
-
